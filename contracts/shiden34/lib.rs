@@ -23,6 +23,8 @@ pub mod shiden34 {
         },
     };
 
+    use ink_prelude::vec::Vec;
+
     use payable_mint_pkg::{
         impls::payable_mint::*,
         traits::payable_mint::*,
@@ -91,6 +93,7 @@ pub mod shiden34 {
                 instance.payable_mint.price_per_mint = price_per_mint;
                 instance.payable_mint.last_token_id = 0;
                 instance.payable_mint.max_amount = 1;
+                instance.payable_mint.token_set = (1..max_supply).map(u64::from).collect::<Vec<u64>>();
             })
         }
     }
