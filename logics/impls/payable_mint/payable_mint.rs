@@ -79,6 +79,7 @@ where
 
     /// Mint next available token for the caller
     default fn mint_next(&mut self) -> Result<(), PSP34Error> {
+        self.check_amount(1);
         self.check_value(Self::env().transferred_value(), 1)?;
         let caller = Self::env().caller();
 
@@ -188,10 +189,9 @@ where
                 Shiden34Error::TooManyTokensToMint.as_str(),
             )));
         }
-        if let Some(amount) = self.data::<Data>().last_token_id.checked_add(mint_amount) {
-            if amount <= self.data::<Data>().max_supply {
-                return Ok(());
-            }
+        let token_left = self.data::<Data>().token_set.len().clone() as u64;
+        if mint_amount <= token_left {
+            return Ok(());
         }
         return Err(PSP34Error::Custom(String::from(
             Shiden34Error::CollectionIsFull.as_str(),
@@ -222,7 +222,7 @@ where
 
     default fn get_mint_id(&mut self) -> u64 {
         let token_length = self.data::<Data>().token_set.len().clone() as u64;
-        let token_set_idx = self.get_pseudo_random(token_length);
+        let token_set_idx = self.get_pseudo_random(token_length - 1);
         self.data::<Data>().token_set.swap_remove(token_set_idx as usize)
     }
 }
