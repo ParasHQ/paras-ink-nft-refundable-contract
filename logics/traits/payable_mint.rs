@@ -1,4 +1,5 @@
 use ink_prelude::string::String as PreludeString;
+use ink_prelude::vec::Vec;
 
 use openbrush::{
     contracts::psp34::PSP34Error,
@@ -15,11 +16,11 @@ pub type PayableMintRef = dyn PayableMint;
 pub trait PayableMint {
     /// Mint one or more tokens
     #[ink(message, payable)]
-    fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<(), PSP34Error>;
+    fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error>;
 
     /// Mint next available token for the caller
     #[ink(message, payable)]
-    fn mint_next(&mut self) -> Result<(), PSP34Error>;
+    fn mint_next(&mut self) -> Result<u64, PSP34Error>;
 
     /// Set new value for the baseUri
     #[ink(message)]

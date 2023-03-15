@@ -20,10 +20,11 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use ink_prelude::string::{String as PreludeString, ToString};
-use ink_prelude::vec::Vec;
 
 use crate::impls::payable_mint::types::{Data, Shiden34Error};
 pub use crate::traits::payable_mint::PayableMint;
+
+use ink_prelude::vec::Vec;
 use openbrush::{
     contracts::{
         ownable::*,
@@ -63,23 +64,25 @@ where
 {
     /// Mint one or more tokens
     #[modifiers(non_reentrant)]
-    default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<(), PSP34Error> {
+    default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error> {
         self.check_amount(mint_amount)?;
         self.check_value(Self::env().transferred_value(), mint_amount)?;
 
+        let mut token_ids = Vec::new();
         for _ in 0..mint_amount {
             let mint_id = self.get_mint_id();
             self.data::<psp34::Data<enumerable::Balances>>()
                 ._mint_to(to, Id::U64(mint_id))?;
             self._emit_transfer_event(None, Some(to), Id::U64(mint_id));
+            token_ids.push(mint_id)
         }
 
-        Ok(())
+        Ok(token_ids)
     }
 
     /// Mint next available token for the caller
-    default fn mint_next(&mut self) -> Result<(), PSP34Error> {
-        self.check_amount(1);
+    default fn mint_next(&mut self) -> Result<u64, PSP34Error> {
+        self.check_amount(1)?;
         self.check_value(Self::env().transferred_value(), 1)?;
         let caller = Self::env().caller();
 
@@ -88,7 +91,7 @@ where
             ._mint_to(caller, Id::U64(mint_id))?;
 
         self._emit_transfer_event(None, Some(caller), Id::U64(mint_id));
-        return Ok(());
+        return Ok(mint_id);
     }
 
     /// Set new value for the baseUri
