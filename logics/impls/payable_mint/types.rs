@@ -1,10 +1,11 @@
 use ink_prelude::vec::Vec;
 
-use openbrush::traits::{
-    Balance,
-    String,
-};
+use openbrush::traits::{Balance, String};
 pub const STORAGE_KEY: u32 = openbrush::storage_unique_key!(Data);
+
+use ink_env::AccountId;
+pub type Seconds = u64;
+pub type Percentage = u64;
 
 #[derive(Default, Debug)]
 #[openbrush::upgradeable_storage(STORAGE_KEY)]
@@ -15,7 +16,16 @@ pub struct Data {
     pub price_per_mint: Balance,
     pub max_amount: u64,
     pub token_set: Vec<u64>,
-    pub pseudo_random_salt: u64
+    pub pseudo_random_salt: u64,
+    pub project_account_id: AccountId,
+    pub mint_start_date: u64,
+    pub mint_end_date: u64,
+    pub first_refund_period: Seconds,
+    pub first_refund_share: Percentage,
+    pub second_refund_period: Seconds,
+    pub second_refund_share: Percentage,
+    pub third_refund_period: Seconds,
+    pub third_refund_share: Percentage,
 }
 
 #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
