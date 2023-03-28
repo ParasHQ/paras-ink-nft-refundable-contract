@@ -74,8 +74,8 @@ pub mod shiden34 {
             max_supply: u64,
             price_per_mint: Balance,
             project_account_id: AccountId,
-            mint_start_date: u64,
-            mint_end_date: u64,
+            mint_start_at: u64,
+            mint_end_at: u64,
             first_refund_period: Seconds,
             first_refund_share: Percentage,
             second_refund_period: Seconds,
@@ -97,8 +97,8 @@ pub mod shiden34 {
                     (1..max_supply + 1).map(u64::from).collect::<Vec<u64>>();
                 instance.payable_mint.pseudo_random_salt = 0;
                 instance.payable_mint.project_account_id = project_account_id;
-                instance.payable_mint.mint_start_date = mint_start_date;
-                instance.payable_mint.mint_end_date = mint_end_date;
+                instance.payable_mint.mint_start_at = mint_start_at;
+                instance.payable_mint.mint_end_at = mint_end_at;
                 instance.payable_mint.first_refund_period = first_refund_period;
                 instance.payable_mint.first_refund_share = first_refund_share;
                 instance.payable_mint.second_refund_period = second_refund_period;
