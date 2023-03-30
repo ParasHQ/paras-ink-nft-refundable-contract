@@ -3,17 +3,14 @@ use ink_prelude::vec::Vec;
 
 use openbrush::{
     contracts::psp34::PSP34Error,
-    traits::{
-        AccountId,
-        Balance,
-    },
+    traits::{AccountId, Balance},
 };
 
 #[openbrush::wrapper]
-pub type PayableMintRef = dyn PayableMint;
+pub type LaunchpadRef = dyn Launchpad;
 
 #[openbrush::trait_definition]
-pub trait PayableMint {
+pub trait Launchpad {
     /// Mint one or more tokens
     #[ink(message, payable)]
     fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error>;
@@ -22,13 +19,20 @@ pub trait PayableMint {
     #[ink(message, payable)]
     fn mint_next(&mut self) -> Result<u64, PSP34Error>;
 
+    #[ink(message)]
+    fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error>;
+
     /// Set new value for the baseUri
     #[ink(message)]
     fn set_base_uri(&mut self, uri: PreludeString) -> Result<(), PSP34Error>;
 
-    /// Withdraws funds to contract owner
+    /// Withdraw funds to contract owner
     #[ink(message)]
-    fn withdraw(&mut self) -> Result<(), PSP34Error>;
+    fn withdraw_launchpad(&mut self) -> Result<(), PSP34Error>;
+
+    /// Withdraw funds to launchpad project
+    #[ink(message)]
+    fn withdraw_project(&mut self) -> Result<(), PSP34Error>;
 
     /// Set max number of tokens which could be minted per call
     #[ink(message)]

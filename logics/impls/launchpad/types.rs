@@ -4,7 +4,7 @@ use openbrush::traits::{Balance, String};
 pub const STORAGE_KEY: u32 = openbrush::storage_unique_key!(Data);
 
 use ink_env::AccountId;
-pub type Seconds = u64;
+pub type MilliSeconds = u64;
 pub type Percentage = u64;
 
 #[derive(Default, Debug)]
@@ -18,13 +18,13 @@ pub struct Data {
     pub token_set: Vec<u64>,
     pub pseudo_random_salt: u64,
     pub project_account_id: AccountId,
-    pub mint_start_date: u64,
-    pub mint_end_date: u64,
-    pub first_refund_period: Seconds,
+    pub mint_start_at: u64,
+    pub mint_end_at: u64,
+    pub first_refund_period: MilliSeconds,
     pub first_refund_share: Percentage,
-    pub second_refund_period: Seconds,
+    pub second_refund_period: MilliSeconds,
     pub second_refund_share: Percentage,
-    pub third_refund_period: Seconds,
+    pub third_refund_period: MilliSeconds,
     pub third_refund_share: Percentage,
 }
 
@@ -36,6 +36,7 @@ pub enum Shiden34Error {
     CollectionIsFull,
     TooManyTokensToMint,
     WithdrawalFailed,
+    NotMintingTime,
 }
 
 impl Shiden34Error {
@@ -46,6 +47,7 @@ impl Shiden34Error {
             Shiden34Error::CollectionIsFull => String::from("CollectionIsFull"),
             Shiden34Error::TooManyTokensToMint => String::from("TooManyTokensToMint"),
             Shiden34Error::WithdrawalFailed => String::from("WithdrawalFailed"),
+            Shiden34Error::NotMintingTime => String::from("NotMintingTime"),
         }
     }
 }

@@ -21,8 +21,8 @@
 
 use ink_prelude::string::{String as PreludeString, ToString};
 
-use crate::impls::payable_mint::types::{Data, Shiden34Error};
-pub use crate::traits::payable_mint::PayableMint;
+use crate::impls::launchpad::types::{Data, Shiden34Error};
+pub use crate::traits::launchpad::Launchpad;
 
 use ink_prelude::vec::Vec;
 use openbrush::{
@@ -50,9 +50,15 @@ pub trait Internal {
     fn get_pseudo_random(&mut self, max_amount: u64) -> u64;
 
     fn get_mint_id(&mut self) -> u64;
+
+    fn get_total_available_to_withdraw(&self) -> Balance;
+
+    fn get_refund_amount(&self) -> Balance;
+
+    fn check_minting_available(&self) -> Result<(), PSP34Error>;
 }
 
-impl<T> PayableMint for T
+impl<T> Launchpad for T
 where
     T: Storage<Data>
         + Storage<psp34::Data<enumerable::Balances>>
@@ -65,6 +71,7 @@ where
     /// Mint one or more tokens
     #[modifiers(non_reentrant)]
     default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error> {
+        self.check_minting_available();
         self.check_amount(mint_amount)?;
         self.check_value(Self::env().transferred_value(), mint_amount)?;
 
@@ -82,6 +89,7 @@ where
 
     /// Mint next available token for the caller
     default fn mint_next(&mut self) -> Result<u64, PSP34Error> {
+        self.check_minting_available();
         self.check_amount(1)?;
         self.check_value(Self::env().transferred_value(), 1)?;
         let caller = Self::env().caller();
@@ -107,17 +115,16 @@ where
 
     /// Withdraws funds to contract owner
     #[modifiers(only_owner)]
-    default fn withdraw(&mut self) -> Result<(), PSP34Error> {
-        let balance = Self::env().balance();
-        let current_balance = balance
-            .checked_sub(Self::env().minimum_balance())
-            .unwrap_or_default();
-        Self::env()
-            .transfer(self.data::<ownable::Data>().owner(), current_balance)
-            .map_err(|_| {
-                PSP34Error::Custom(String::from(Shiden34Error::WithdrawalFailed.as_str()))
-            })?;
-        Ok(())
+    default fn withdraw_launchpad(&mut self) -> Result<(), PSP34Error> {
+        return Ok(());
+    }
+
+    default fn withdraw_project(&mut self) -> Result<(), PSP34Error> {
+        return Ok(());
+    }
+
+    default fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error> {
+        return Ok(());
     }
 
     /// Set max number of tokens which could be minted per call
@@ -155,11 +162,9 @@ where
     default fn get_max_mint_amount(&mut self) -> u64 {
         self.data::<Data>().max_amount
     }
-
-    
 }
 
-/// Helper trait for PayableMint
+/// Helper trait for Launchpad
 impl<T> Internal for T
 where
     T: Storage<Data> + Storage<psp34::Data<enumerable::Balances>>,
@@ -226,6 +231,27 @@ where
     default fn get_mint_id(&mut self) -> u64 {
         let token_length = self.data::<Data>().token_set.len().clone() as u64;
         let token_set_idx = self.get_pseudo_random(token_length - 1);
-        self.data::<Data>().token_set.swap_remove(token_set_idx as usize)
+        self.data::<Data>()
+            .token_set
+            .swap_remove(token_set_idx as usize)
+    }
+
+    default fn check_minting_available(&self) -> Result<(), PSP34Error> {
+        let time_now = Self::env().block_timestamp();
+        if (time_now < self.data::<Data>().mint_start_at)
+            || time_now > self.data::<Data>().mint_end_at
+        {
+            return Err(PSP34Error::Custom(String::from(
+                Shiden34Error::NotMintingTime.as_str(),
+            )));
+        }
+        return Ok(());
+    }
+
+    fn get_total_available_to_withdraw(&self) -> Balance {
+        return 1;
+    }
+    fn get_refund_amount(&self) -> Balance {
+        return 1;
     }
 }

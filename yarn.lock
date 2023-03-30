@@ -2,6 +2,18 @@
 # yarn lockfile v1
 
 
+"@727-ventures/typechain-types@^1.0.0-beta.1":
+  version "1.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@727-ventures/typechain-types/-/typechain-types-1.0.0-beta.1.tgz#3f997ca70233e792718c561137d805a8f7865d6e"
+  integrity sha512-BEjoce+BWMlstdlVe/+WbLsA/8BbGc2haoQqCOOZ4BnAHDKgZiH0A6Ybob8f8Lf/zJw3gk0zcGrvTDKe1ddOdw==
+  dependencies:
+    "@polkadot/api" "^10.1.4"
+    "@polkadot/api-contract" "^10.1.4"
+    "@types/bn.js" "^5.1.0"
+    "@types/node" "^18.0.3"
+    camelcase "^6.3.0"
+    typescript "^4.9.5"
+
 "@babel/code-frame@7.12.11":
   version "7.12.11"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.12.11.tgz#f4ad435aa263db935b8f10f2c552d23fb716a63f"
@@ -178,7 +190,7 @@
     "@polkadot/util" "^10.1.13"
     rxjs "^7.5.7"
 
-"@polkadot/api-contract@^9.6.1":
+"@polkadot/api-contract@^10.1.4", "@polkadot/api-contract@^9.6.1":
   version "9.9.1"
   resolved "https://registry.yarnpkg.com/@polkadot/api-contract/-/api-contract-9.9.1.tgz#ffb45012289b9a97d4caab9c97551e3c5cd472b1"
   integrity sha512-2rpdgnkkmdL30r/AhEGIf9e699xYgXizbI8kngszvLOa3C3sNDzDsjF9FET7bGEPcQWMdl9WSuzM+bqXRhXiBw==
@@ -208,7 +220,7 @@
     "@polkadot/util-crypto" "^10.1.13"
     rxjs "^7.5.7"
 
-"@polkadot/api@9.9.1", "@polkadot/api@^9.6.1":
+"@polkadot/api@9.9.1", "@polkadot/api@^10.1.4", "@polkadot/api@^9.6.1":
   version "9.9.1"
   resolved "https://registry.yarnpkg.com/@polkadot/api/-/api-9.9.1.tgz#a8baf368fc57211acfd9ecf831b820272f8144d6"
   integrity sha512-3ltj6BbqEV9SCUlJIEmXWBmmQlZCvVPaj0N+99J9L2yiQ1E0KJsAizh10RxEjCvgYb2iWaE4ItPfhN0GxFJm7Q==
@@ -3042,6 +3054,11 @@ typescript@^4.7.4, typescript@^4.8.4:
   version "4.9.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.3.tgz#3aea307c1746b8c384435d8ac36b8a2e580d85db"
   integrity sha512-CIfGzTelbKNEnLpLdGFgdyKhG23CKdKgQPOBc+OUNrkJ2vr+KSzsSV5kq5iWhEQbok+quxgGzrAtGWCyU7tHnA==
+
+typescript@^4.9.5:
+  version "4.9.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.5.tgz#095979f9bcc0d09da324d58d03ce8f8374cbe65a"
+  integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
 uglify-js@^3.1.4:
   version "3.17.4"
