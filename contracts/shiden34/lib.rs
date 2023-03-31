@@ -8,9 +8,13 @@ pub mod shiden34 {
     use openbrush::{
         contracts::{
             ownable::*,
-            psp34::extensions::{enumerable::*, metadata::*},
+            psp34::{
+                extensions::{enumerable::*, metadata::*},
+                PSP34Error,
+            },
             reentrancy_guard::*,
         },
+        modifiers,
         traits::{Storage, String},
     };
 
@@ -106,6 +110,19 @@ pub mod shiden34 {
                 instance.launchpad.third_refund_period = third_refund_period;
                 instance.launchpad.third_refund_share = third_refund_share;
             })
+        }
+
+        #[ink(message)]
+        #[modifiers(only_owner)]
+        pub fn set_code(&mut self, code_hash: [u8; 32]) -> Result<(), PSP34Error> {
+            ink_env::set_code_hash(&code_hash).unwrap_or_else(|err| {
+                panic!(
+                    "Failed to `set_code_hash` to {:?} due to {:?}",
+                    code_hash, err
+                )
+            });
+            ink_env::debug_println!("Switched code hash to {:?}.", code_hash);
+            Ok(())
         }
     }
 
