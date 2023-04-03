@@ -81,8 +81,10 @@ pub mod shiden34 {
             max_supply: u64,
             price_per_mint: Balance,
             project_account_id: AccountId,
-            mint_start_at: u64,
-            mint_end_at: u64,
+            prepresale_start_at: u64,
+            presale_start_at: u64,
+            public_sale_start_at: u64,
+            public_sale_end_at: u64,
             refund_periods: Vec<MilliSeconds>, // TO DO: test for input
             // refund shares : 95, 85, 70 -> please check accuracy
             refund_shares: Vec<Percentage>, // TO DO: test for input
@@ -102,8 +104,10 @@ pub mod shiden34 {
                     (1..max_supply + 1).map(u64::from).collect::<Vec<u64>>();
                 instance.launchpad.pseudo_random_salt = 0;
                 instance.launchpad.project_account_id = project_account_id;
-                instance.launchpad.mint_start_at = mint_start_at;
-                instance.launchpad.mint_end_at = mint_end_at;
+                instance.launchpad.prepresale_start_at = prepresale_start_at;
+                instance.launchpad.presale_start_at = presale_start_at;
+                instance.launchpad.public_sale_start_at = public_sale_start_at;
+                instance.launchpad.public_sale_end_at = public_sale_end_at;
                 assert_eq!(refund_periods.len(), refund_shares.len()); // TO DO: test if length is not the same
                                                                        // To Do : assert that refund_periods are in increasing pattern
                 instance.launchpad.refund_periods = refund_periods;
