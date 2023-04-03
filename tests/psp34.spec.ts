@@ -56,12 +56,9 @@ describe("Minting psp34 tokens", () => {
           projectAccount.address,
           0,
           1711626898000,
-          2592000000,
-          9500,
-          2592000000,
-          8500,
-          2592000000,
-          7000
+          [],
+          [],
+          projectAccount.address
         )
       ).address,
       deployer,
