@@ -22,6 +22,10 @@ pub trait Launchpad {
     #[ink(message)]
     fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error>;
 
+    // Get refund amount for given token_id
+    #[ink(message)]
+    fn get_refund_amount(&self, token_id: u64) -> Balance;
+
     /// Set new value for the baseUri
     #[ink(message)]
     fn set_base_uri(&mut self, uri: PreludeString) -> Result<(), PSP34Error>;

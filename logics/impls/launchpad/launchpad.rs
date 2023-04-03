@@ -53,7 +53,7 @@ pub trait Internal {
 
     fn get_total_available_to_withdraw(&self) -> Balance;
 
-    fn get_refund_amount(&self) -> Balance;
+    fn get_refund_amount_internal(&self, token_id: u64) -> Balance;
 
     fn check_minting_available(&self) -> Result<(), PSP34Error>;
 }
@@ -76,12 +76,16 @@ where
         self.check_value(Self::env().transferred_value(), mint_amount)?;
 
         let mut token_ids = Vec::new();
+        let current_timestamp = Self::env().block_timestamp();
         for _ in 0..mint_amount {
             let mint_id = self.get_mint_id();
             self.data::<psp34::Data<enumerable::Balances>>()
                 ._mint_to(to, Id::U64(mint_id))?;
             self._emit_transfer_event(None, Some(to), Id::U64(mint_id));
-            token_ids.push(mint_id)
+            token_ids.push(mint_id);
+            self.data::<Data>()
+                .minted_at
+                .insert(mint_id, &current_timestamp);
         }
 
         Ok(token_ids)
@@ -99,6 +103,11 @@ where
             ._mint_to(caller, Id::U64(mint_id))?;
 
         self._emit_transfer_event(None, Some(caller), Id::U64(mint_id));
+
+        let current_timestamp = Self::env().block_timestamp();
+        self.data::<Data>()
+            .minted_at
+            .insert(mint_id, &current_timestamp);
         return Ok(mint_id);
     }
 
@@ -124,7 +133,28 @@ where
     }
 
     default fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error> {
-        return Ok(());
+        let caller_id = Self::env().caller();
+
+        assert_eq!(caller_id, self._owner_of(&Id::U64(token_id)).unwrap()); // To Do : check if assert works
+
+        let refund_amount = self.get_refund_amount_internal(token_id);
+
+        if refund_amount == 0 {
+            return Err(PSP34Error::Custom(String::from(
+                Shiden34Error::RefundFailed.as_str(),
+            )));
+        } else {
+            let refund_address = self.data::<Data>().refund_address;
+            self._transfer_token(refund_address, Id::U64(token_id), Vec::new());
+            self.data::<Data>().has_refunded.insert(token_id, &true);
+
+            Self::env()
+                .transfer(caller_id, refund_amount)
+                .map_err(|_| {
+                    PSP34Error::Custom(String::from(Shiden34Error::WithdrawalFailed.as_str()))
+                })?;
+            return Ok(());
+        }
     }
 
     /// Set max number of tokens which could be minted per call
@@ -161,6 +191,10 @@ where
     /// Get max number of tokens which could be minted per call
     default fn get_max_mint_amount(&mut self) -> u64 {
         self.data::<Data>().max_amount
+    }
+
+    default fn get_refund_amount(&self, token_id: u64) -> Balance {
+        self.get_refund_amount_internal(token_id)
     }
 }
 
@@ -251,7 +285,33 @@ where
     fn get_total_available_to_withdraw(&self) -> Balance {
         return 1;
     }
-    fn get_refund_amount(&self) -> Balance {
-        return 1;
+
+    default fn get_refund_amount_internal(&self, token_id: u64) -> Balance {
+        if !self
+            .data::<Data>()
+            .has_refunded
+            .get(token_id)
+            .unwrap_or(false)
+        {
+            return 0;
+        }
+
+        let minted_timestamp = self.data::<Data>().minted_at.get(token_id).unwrap();
+
+        let current_timestamp = Self::env().block_timestamp();
+
+        for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
+            if current_timestamp < (minted_timestamp + refund_period) {
+                let refund_share: Balance =
+                    *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
+
+                let refund_amount: Balance =
+                    (self.data::<Data>().price_per_mint * refund_share).saturating_div(100);
+
+                return refund_amount;
+            }
+        }
+
+        return 0;
     }
 }

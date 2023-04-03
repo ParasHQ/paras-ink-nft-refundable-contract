@@ -20,7 +20,13 @@ pub mod shiden34 {
 
     use ink_prelude::vec::Vec;
 
-    use launchpad_pkg::{impls::launchpad::*, traits::launchpad::*};
+    use launchpad_pkg::{
+        impls::launchpad::{
+            types::{MilliSeconds, Percentage},
+            *,
+        },
+        traits::launchpad::*,
+    };
 
     // Shiden34Contract contract storage
     #[ink(storage)]
@@ -66,9 +72,6 @@ pub mod shiden34 {
         approved: bool,
     }
 
-    pub type MilliSeconds = u64;
-    pub type Percentage = u64;
-
     impl Shiden34Contract {
         #[ink(constructor)]
         pub fn new(
@@ -80,12 +83,10 @@ pub mod shiden34 {
             project_account_id: AccountId,
             mint_start_at: u64,
             mint_end_at: u64,
-            first_refund_period: MilliSeconds,
-            first_refund_share: Percentage,
-            second_refund_period: MilliSeconds,
-            second_refund_share: Percentage,
-            third_refund_period: MilliSeconds,
-            third_refund_share: Percentage,
+            refund_periods: Vec<MilliSeconds>, // TO DO: test for input
+            // refund shares : 95, 85, 70 -> please check accuracy
+            refund_shares: Vec<Percentage>, // TO DO: test for input
+            refund_address: AccountId,
         ) -> Self {
             ink_lang::codegen::initialize_contract(|instance: &mut Shiden34Contract| {
                 instance._init_with_owner(instance.env().caller());
@@ -103,18 +104,18 @@ pub mod shiden34 {
                 instance.launchpad.project_account_id = project_account_id;
                 instance.launchpad.mint_start_at = mint_start_at;
                 instance.launchpad.mint_end_at = mint_end_at;
-                instance.launchpad.first_refund_period = first_refund_period;
-                instance.launchpad.first_refund_share = first_refund_share;
-                instance.launchpad.second_refund_period = second_refund_period;
-                instance.launchpad.second_refund_share = second_refund_share;
-                instance.launchpad.third_refund_period = third_refund_period;
-                instance.launchpad.third_refund_share = third_refund_share;
+                assert_eq!(refund_periods.len(), refund_shares.len()); // TO DO: test if length is not the same
+                                                                       // To Do : assert that refund_periods are in increasing pattern
+                instance.launchpad.refund_periods = refund_periods;
+                instance.launchpad.refund_shares = refund_shares;
+                instance.launchpad.refund_address = refund_address;
             })
         }
 
         #[ink(message)]
         #[modifiers(only_owner)]
         pub fn set_code(&mut self, code_hash: [u8; 32]) -> Result<(), PSP34Error> {
+            // TO DO: test set_code
             ink_env::set_code_hash(&code_hash).unwrap_or_else(|err| {
                 panic!(
                     "Failed to `set_code_hash` to {:?} due to {:?}",
