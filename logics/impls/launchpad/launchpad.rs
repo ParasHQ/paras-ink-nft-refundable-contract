@@ -28,7 +28,10 @@ use ink_prelude::vec::Vec;
 use openbrush::{
     contracts::{
         ownable::*,
-        psp34::extensions::{enumerable::*, metadata::*},
+        psp34::{
+            balances::BalancesManager,
+            extensions::{enumerable::*, metadata::*},
+        },
         reentrancy_guard::*,
     },
     modifiers,
@@ -36,6 +39,14 @@ use openbrush::{
 };
 
 use ink_env::{hash, hash_bytes};
+
+pub enum MintingStatus {
+    Closed,
+    Prepresale,
+    Presale,
+    Public,
+    End,
+}
 
 pub trait Internal {
     /// Check if the transferred mint values is as expected
@@ -55,7 +66,13 @@ pub trait Internal {
 
     fn get_refund_amount_internal(&self, token_id: u64) -> Balance;
 
-    fn check_minting_available(&self) -> Result<(), PSP34Error>;
+    fn check_allowed_to_mint(
+        &mut self,
+        account_id: AccountId,
+        mint_amount: u64,
+    ) -> Result<(), PSP34Error>;
+
+    fn get_current_minting_status(&self) -> MintingStatus;
 }
 
 impl<T> Launchpad for T
@@ -71,9 +88,10 @@ where
     /// Mint one or more tokens
     #[modifiers(non_reentrant)]
     default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error> {
-        self.check_minting_available();
+        let caller_id = Self::env().caller();
         self.check_amount(mint_amount)?;
         self.check_value(Self::env().transferred_value(), mint_amount)?;
+        self.check_allowed_to_mint(caller_id, mint_amount)?;
 
         let mut token_ids = Vec::new();
         let current_timestamp = Self::env().block_timestamp();
@@ -83,9 +101,6 @@ where
                 ._mint_to(to, Id::U64(mint_id))?;
             self._emit_transfer_event(None, Some(to), Id::U64(mint_id));
             token_ids.push(mint_id);
-            self.data::<Data>()
-                .minted_at
-                .insert(mint_id, &current_timestamp);
         }
 
         Ok(token_ids)
@@ -93,21 +108,19 @@ where
 
     /// Mint next available token for the caller
     default fn mint_next(&mut self) -> Result<u64, PSP34Error> {
-        self.check_minting_available();
+        let caller_id = Self::env().caller();
+
         self.check_amount(1)?;
         self.check_value(Self::env().transferred_value(), 1)?;
-        let caller = Self::env().caller();
+        self.check_allowed_to_mint(caller_id, 1);
 
         let mint_id = self.get_mint_id();
         self.data::<psp34::Data<enumerable::Balances>>()
-            ._mint_to(caller, Id::U64(mint_id))?;
+            ._mint_to(caller_id, Id::U64(mint_id))?;
 
-        self._emit_transfer_event(None, Some(caller), Id::U64(mint_id));
+        self._emit_transfer_event(None, Some(caller_id), Id::U64(mint_id));
 
         let current_timestamp = Self::env().block_timestamp();
-        self.data::<Data>()
-            .minted_at
-            .insert(mint_id, &current_timestamp);
         return Ok(mint_id);
     }
 
@@ -196,6 +209,30 @@ where
     default fn get_refund_amount(&self, token_id: u64) -> Balance {
         self.get_refund_amount_internal(token_id)
     }
+
+    #[modifiers(only_owner)]
+    default fn add_whitelisted_account_to_prepresale(
+        &mut self,
+        account_id: AccountId,
+        mint_amount: u64,
+    ) -> Result<(), PSP34Error> {
+        self.data::<Data>()
+            .prepresale_whitelisted
+            .insert(account_id, &mint_amount);
+        Ok(())
+    }
+
+    #[modifiers(only_owner)]
+    default fn add_whitelisted_account_to_presale(
+        &mut self,
+        account_id: AccountId,
+        mint_amount: u64,
+    ) -> Result<(), PSP34Error> {
+        self.data::<Data>()
+            .presale_whitelisted
+            .insert(account_id, &mint_amount);
+        Ok(())
+    }
 }
 
 /// Helper trait for Launchpad
@@ -209,7 +246,21 @@ where
         transferred_value: u128,
         mint_amount: u64,
     ) -> Result<(), PSP34Error> {
-        if let Some(value) = (mint_amount as u128).checked_mul(self.data::<Data>().price_per_mint) {
+        let minting_status = self.get_current_minting_status();
+
+        let mut price;
+        match minting_status {
+            MintingStatus::Prepresale => price = self.data::<Data>().prepresale_price_per_mint,
+            MintingStatus::Presale => price = self.data::<Data>().presale_price_per_mint,
+            MintingStatus::Public => price = self.data::<Data>().price_per_mint,
+            _ => {
+                return Err(PSP34Error::Custom(String::from(
+                    Shiden34Error::BadMintValue.as_str(),
+                )))
+            }
+        };
+
+        if let Some(value) = (mint_amount as u128).checked_mul(price) {
             if transferred_value == value {
                 return Ok(());
             }
@@ -270,15 +321,61 @@ where
             .swap_remove(token_set_idx as usize)
     }
 
-    default fn check_minting_available(&self) -> Result<(), PSP34Error> {
-        let time_now = Self::env().block_timestamp();
-        if (time_now < self.data::<Data>().mint_start_at)
-            || time_now > self.data::<Data>().mint_end_at
-        {
-            return Err(PSP34Error::Custom(String::from(
-                Shiden34Error::NotMintingTime.as_str(),
-            )));
+    default fn check_allowed_to_mint(
+        &mut self,
+        account_id: AccountId,
+        mint_amount: u64,
+    ) -> Result<(), PSP34Error> {
+        let minting_status = self.get_current_minting_status();
+
+        match minting_status {
+            MintingStatus::Closed => {
+                return Err(PSP34Error::Custom(String::from(
+                    Shiden34Error::UnableToMint.as_str(),
+                )))
+            }
+            MintingStatus::End => {
+                return Err(PSP34Error::Custom(String::from(
+                    Shiden34Error::UnableToMint.as_str(),
+                )))
+            }
+            MintingStatus::Prepresale => {
+                let mint_slot = self
+                    .data::<Data>()
+                    .prepresale_whitelisted
+                    .get(account_id)
+                    .unwrap_or(0);
+
+                if mint_slot < mint_amount {
+                    return Err(PSP34Error::Custom(String::from(
+                        Shiden34Error::UnableToMint.as_str(),
+                    )));
+                }
+                self.data::<Data>()
+                    .prepresale_whitelisted
+                    .insert(account_id, &(mint_slot - mint_amount));
+            }
+            MintingStatus::Presale => {
+                let mint_slot = self
+                    .data::<Data>()
+                    .presale_whitelisted
+                    .get(account_id)
+                    .unwrap_or(0);
+
+                if mint_slot < mint_amount {
+                    return Err(PSP34Error::Custom(String::from(
+                        Shiden34Error::UnableToMint.as_str(),
+                    )));
+                }
+                self.data::<Data>()
+                    .presale_whitelisted
+                    .insert(account_id, &(mint_slot - mint_amount));
+            }
+            MintingStatus::Public => {
+                return Ok(());
+            }
         }
+
         return Ok(());
     }
 
@@ -295,13 +392,10 @@ where
         {
             return 0;
         }
-
-        let minted_timestamp = self.data::<Data>().minted_at.get(token_id).unwrap();
-
         let current_timestamp = Self::env().block_timestamp();
 
         for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
-            if current_timestamp < (minted_timestamp + refund_period) {
+            if current_timestamp < (self.data::<Data>().public_sale_end_at + refund_period) {
                 let refund_share: Balance =
                     *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
 
@@ -313,5 +407,27 @@ where
         }
 
         return 0;
+    }
+
+    default fn get_current_minting_status(&self) -> MintingStatus {
+        let current_timestamp = Self::env().block_timestamp();
+
+        if current_timestamp > self.data::<Data>().public_sale_end_at
+            || u128::from(self.data::<Data>().max_supply)
+                == self
+                    .data::<psp34::Data<enumerable::Balances>>()
+                    .total_supply()
+        {
+            // or if token supply abis
+            return MintingStatus::End;
+        } else if current_timestamp > self.data::<Data>().public_sale_start_at {
+            return MintingStatus::Public;
+        } else if current_timestamp > self.data::<Data>().presale_start_at {
+            return MintingStatus::Presale;
+        } else if current_timestamp > self.data::<Data>().prepresale_start_at {
+            return MintingStatus::Prepresale;
+        } else {
+            return MintingStatus::Closed;
+        }
     }
 }

@@ -57,4 +57,18 @@ pub trait Launchpad {
     /// Get max number of tokens which could be minted per call
     #[ink(message)]
     fn get_max_mint_amount(&mut self) -> u64;
+
+    #[ink(message)]
+    fn add_whitelisted_account_to_prepresale(
+        &mut self,
+        account_id: AccountId,
+        mint_amount: u64,
+    ) -> Result<(), PSP34Error>;
+
+    #[ink(message)]
+    fn add_whitelisted_account_to_presale(
+        &mut self,
+        account_id: AccountId,
+        mint_amount: u64,
+    ) -> Result<(), PSP34Error>;
 }

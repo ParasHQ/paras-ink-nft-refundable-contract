@@ -20,11 +20,17 @@ pub struct Data {
     pub token_set: Vec<u64>,
     pub pseudo_random_salt: u64,
     pub project_account_id: AccountId,
-    pub mint_start_at: u64,
-    pub mint_end_at: u64,
+    // OG Sale, Presale, Public Sale timeline
+    pub public_sale_start_at: u64,
+    pub public_sale_end_at: u64,
+    pub prepresale_start_at: u64,
+    pub prepresale_price_per_mint: Balance,
+    pub prepresale_whitelisted: Mapping<AccountId, u64>,
+    pub presale_start_at: u64,
+    pub presale_price_per_mint: Balance,
+    pub presale_whitelisted: Mapping<AccountId, u64>,
     pub refund_periods: Vec<MilliSeconds>,
     pub refund_shares: Vec<Percentage>,
-    pub minted_at: Mapping<TokenId, BlockTimestamp>,
     pub has_refunded: Mapping<TokenId, bool>,
     pub refund_address: AccountId,
 }
@@ -38,7 +44,7 @@ pub enum Shiden34Error {
     CollectionIsFull,
     TooManyTokensToMint,
     WithdrawalFailed,
-    NotMintingTime,
+    UnableToMint,
     RefundFailed,
 }
 
@@ -50,7 +56,7 @@ impl Shiden34Error {
             Shiden34Error::CollectionIsFull => String::from("CollectionIsFull"),
             Shiden34Error::TooManyTokensToMint => String::from("TooManyTokensToMint"),
             Shiden34Error::WithdrawalFailed => String::from("WithdrawalFailed"),
-            Shiden34Error::NotMintingTime => String::from("NotMintingTime"),
+            Shiden34Error::UnableToMint => String::from("UnableToMint"),
             Shiden34Error::RefundFailed => String::from("RefundFailed"),
         }
     }
