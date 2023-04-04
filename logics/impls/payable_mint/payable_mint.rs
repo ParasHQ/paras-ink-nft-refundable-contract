@@ -112,6 +112,7 @@ where
         self._emit_transfer_event(None, Some(caller), Id::U64(token_id));
 
         self.data::<Data>().account_minted.insert(caller, &true);
+        self.data::<Data>().last_token_id += 1;
         return Ok(());
     }
 
@@ -157,7 +158,7 @@ where
             String::from("baseUri"),
         );
         let mut token_uri = PreludeString::from_utf8(value.unwrap()).unwrap();
-        token_uri = token_uri + "basic" + &PreludeString::from(".json");
+        token_uri = token_uri + "1" + &PreludeString::from(".json");
         Ok(token_uri)
     }
 
