@@ -1,4 +1,5 @@
-use ink_prelude::vec::Vec;
+use ink_storage::Mapping;
+use ink_env::AccountId;
 
 use openbrush::traits::{
     Balance,
@@ -14,8 +15,8 @@ pub struct Data {
     pub max_supply: u64,
     pub price_per_mint: Balance,
     pub max_amount: u64,
-    pub token_set: Vec<u64>,
-    pub pseudo_random_salt: u64
+    pub account_minted: Mapping<AccountId, bool>,
+    pub mint_end: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
@@ -26,6 +27,8 @@ pub enum Shiden34Error {
     CollectionIsFull,
     TooManyTokensToMint,
     WithdrawalFailed,
+    MintEnd,
+    CannotMintMoreThanOnce
 }
 
 impl Shiden34Error {
@@ -36,6 +39,8 @@ impl Shiden34Error {
             Shiden34Error::CollectionIsFull => String::from("CollectionIsFull"),
             Shiden34Error::TooManyTokensToMint => String::from("TooManyTokensToMint"),
             Shiden34Error::WithdrawalFailed => String::from("WithdrawalFailed"),
+            Shiden34Error::MintEnd => String::from("MintEnd"),
+            Shiden34Error::CannotMintMoreThanOnce => String::from("CannotMintMoreThanOnce")
         }
     }
 }

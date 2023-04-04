@@ -21,9 +21,8 @@ pub mod shiden34 {
             Storage,
             String,
         },
+        modifiers
     };
-
-    use ink_prelude::vec::Vec;
 
     use payable_mint_pkg::{
         impls::payable_mint::*,
@@ -80,7 +79,6 @@ pub mod shiden34 {
             name: String,
             symbol: String,
             base_uri: String,
-            max_supply: u64,
             price_per_mint: Balance,
         ) -> Self {
             ink_lang::codegen::initialize_contract(|instance: &mut Shiden34Contract| {
@@ -89,13 +87,24 @@ pub mod shiden34 {
                 instance._set_attribute(collection_id.clone(), String::from("name"), name);
                 instance._set_attribute(collection_id.clone(), String::from("symbol"), symbol);
                 instance._set_attribute(collection_id, String::from("baseUri"), base_uri);
-                instance.payable_mint.max_supply = max_supply;
                 instance.payable_mint.price_per_mint = price_per_mint;
                 instance.payable_mint.last_token_id = 0;
-                instance.payable_mint.max_amount = 10;
-                instance.payable_mint.token_set = (1..max_supply+1).map(u64::from).collect::<Vec<u64>>();
-                instance.payable_mint.pseudo_random_salt = 0;
+                instance.payable_mint.max_amount = 1;
+                instance.payable_mint.mint_end = false;
             })
+        }
+
+        #[ink(message)]
+        #[modifiers(only_owner)]
+        pub fn set_code(&mut self, code_hash: [u8; 32]) -> Result<(), PSP34Error> {
+            ink_env::set_code_hash(&code_hash).unwrap_or_else(|err| {
+                panic!(
+                    "Failed to `set_code_hash` to {:?} due to {:?}",
+                    code_hash, err
+                )
+            });
+            ink_env::debug_println!("Switched code hash to {:?}.", code_hash);
+            Ok(())
         }
     }
 
