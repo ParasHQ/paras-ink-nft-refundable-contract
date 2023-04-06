@@ -1,10 +1,7 @@
-use ink_storage::Mapping;
-use ink_env::AccountId;
+use ink::storage::Mapping;
+use openbrush::traits::AccountId;
 
-use openbrush::traits::{
-    Balance,
-    String,
-};
+use openbrush::traits::{Balance, String};
 pub const STORAGE_KEY: u32 = openbrush::storage_unique_key!(Data);
 
 #[derive(Default, Debug)]
@@ -28,7 +25,7 @@ pub enum Shiden34Error {
     TooManyTokensToMint,
     WithdrawalFailed,
     MintEnd,
-    CannotMintMoreThanOnce
+    CannotMintMoreThanOnce,
 }
 
 impl Shiden34Error {
@@ -40,7 +37,7 @@ impl Shiden34Error {
             Shiden34Error::TooManyTokensToMint => String::from("TooManyTokensToMint"),
             Shiden34Error::WithdrawalFailed => String::from("WithdrawalFailed"),
             Shiden34Error::MintEnd => String::from("MintEnd"),
-            Shiden34Error::CannotMintMoreThanOnce => String::from("CannotMintMoreThanOnce")
+            Shiden34Error::CannotMintMoreThanOnce => String::from("CannotMintMoreThanOnce"),
         }
     }
 }

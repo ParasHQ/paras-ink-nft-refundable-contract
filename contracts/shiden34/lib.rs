@@ -3,35 +3,22 @@
 
 #[openbrush::contract]
 pub mod shiden34 {
-    use ink_lang::codegen::{
-        EmitEvent,
-        Env,
-    };
-    use ink_storage::traits::SpreadAllocate;
+    use ink::codegen::{EmitEvent, Env};
     use openbrush::{
         contracts::{
             ownable::*,
-            psp34::extensions::{
-                enumerable::*,
-                metadata::*,
-            },
+            psp34::extensions::{enumerable::*, metadata::*},
             reentrancy_guard::*,
         },
-        traits::{
-            Storage,
-            String,
-        },
-        modifiers
+        modifiers,
+        traits::{Storage, String},
     };
 
-    use payable_mint_pkg::{
-        impls::payable_mint::*,
-        traits::payable_mint::*,
-    };
+    use payable_mint_pkg::{impls::payable_mint::*, traits::payable_mint::*};
 
     // Shiden34Contract contract storage
     #[ink(storage)]
-    #[derive(Default, SpreadAllocate, Storage)]
+    #[derive(Default, Storage)]
     pub struct Shiden34Contract {
         #[storage_field]
         psp34: psp34::Data<enumerable::Balances>,
@@ -81,29 +68,29 @@ pub mod shiden34 {
             base_uri: String,
             price_per_mint: Balance,
         ) -> Self {
-            ink_lang::codegen::initialize_contract(|instance: &mut Shiden34Contract| {
-                instance._init_with_owner(instance.env().caller());
-                let collection_id = instance.collection_id();
-                instance._set_attribute(collection_id.clone(), String::from("name"), name);
-                instance._set_attribute(collection_id.clone(), String::from("symbol"), symbol);
-                instance._set_attribute(collection_id, String::from("baseUri"), base_uri);
-                instance.payable_mint.price_per_mint = price_per_mint;
-                instance.payable_mint.last_token_id = 0;
-                instance.payable_mint.max_amount = 1;
-                instance.payable_mint.mint_end = false;
-            })
+            let mut instance = Self::default();
+            instance._init_with_owner(instance.env().caller());
+            let collection_id = instance.collection_id();
+            instance._set_attribute(collection_id.clone(), String::from("name"), name);
+            instance._set_attribute(collection_id.clone(), String::from("symbol"), symbol);
+            instance._set_attribute(collection_id, String::from("baseUri"), base_uri);
+            instance.payable_mint.price_per_mint = price_per_mint;
+            instance.payable_mint.last_token_id = 0;
+            instance.payable_mint.max_amount = 1;
+            instance.payable_mint.mint_end = false;
+            instance
         }
 
         #[ink(message)]
         #[modifiers(only_owner)]
         pub fn set_code(&mut self, code_hash: [u8; 32]) -> Result<(), PSP34Error> {
-            ink_env::set_code_hash(&code_hash).unwrap_or_else(|err| {
+            ink::env::set_code_hash(&code_hash).unwrap_or_else(|err| {
                 panic!(
                     "Failed to `set_code_hash` to {:?} due to {:?}",
                     code_hash, err
                 )
             });
-            ink_env::debug_println!("Switched code hash to {:?}.", code_hash);
+            ink::env::debug_println!("Switched code hash to {:?}.", code_hash);
             Ok(())
         }
     }
@@ -137,16 +124,9 @@ pub mod shiden34 {
     mod tests {
         use super::*;
         use crate::shiden34::PSP34Error::*;
-        use ink_env::{
-            pay_with_call,
-            test,
-        };
-        use ink_lang as ink;
-        use ink_prelude::string::String as PreludeString;
-        use payable_mint_pkg::impls::payable_mint::{
-            payable_mint::Internal,
-            types::Shiden34Error,
-        };
+        use ink::env::{pay_with_call, test};
+        use ink::prelude::string::String as PreludeString;
+        use payable_mint_pkg::impls::payable_mint::{payable_mint::Internal, types::Shiden34Error};
         const PRICE: Balance = 100_000_000_000_000_000;
         const BASE_URI: &str = "ipfs://myIpfsUri/";
         const MAX_SUPPLY: u64 = 10;
