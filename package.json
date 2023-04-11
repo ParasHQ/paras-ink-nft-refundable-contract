@@ -3,9 +3,8 @@
   "version": "0.2.0",
   "private": true,
   "dependencies": {
-    "@727-ventures/typechain-types": "^1.0.0-beta.1",
-    "@supercolony/typechain-compiler": "^0.5.1-beta.1",
-    "@supercolony/typechain-types": "^0.0.16",
+    "@727-ventures/typechain-compiler": "0.5.13",
+    "@727-ventures/typechain-types": "0.0.22",
     "@types/chai": "^4.3.0",
     "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^8.0.3",
@@ -18,15 +17,13 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "mocha": "10.1.0",
-    "patch-package": "^6.4.7",
     "ts-node": "^10.8.0"
   },
   "scripts": {
     "compile": "typechain-compiler",
     "compile:release": "typechain-compiler --release",
     "test": "mocha --require ts-node/register --recursive ./tests --extension \".spec.ts\" --exit --timeout 20000",
-    "test:single": "mocha --require ts-node/register --extension \".ts\" --exit --timeout 20000",
-    "postinstall": "patch-package"
+    "test:single": "mocha --require ts-node/register --extension \".ts\" --exit --timeout 20000"
   },
   "resolutions": {
     "@polkadot/api": "^9.6.1",

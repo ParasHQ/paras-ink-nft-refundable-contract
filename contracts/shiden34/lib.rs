@@ -3,8 +3,7 @@
 
 #[openbrush::contract]
 pub mod shiden34 {
-    use ink_lang::codegen::{EmitEvent, Env};
-    use ink_storage::traits::SpreadAllocate;
+    use ink::codegen::{EmitEvent, Env};
     use openbrush::{
         contracts::{
             ownable::*,
@@ -12,30 +11,28 @@ pub mod shiden34 {
                 extensions::{enumerable::*, metadata::*},
                 PSP34Error,
             },
-            reentrancy_guard::*,
         },
         modifiers,
         traits::{Storage, String},
     };
 
-    use ink_prelude::vec::Vec;
+    use ink::prelude::vec::Vec;
 
-    use launchpad_pkg::{
+    use psp34_extension_pkg::{
         impls::launchpad::{
             types::{MilliSeconds, Percentage},
             *,
         },
         traits::launchpad::*,
+        traits::psp34_traits::*,
     };
 
     // Shiden34Contract contract storage
     #[ink(storage)]
-    #[derive(Default, SpreadAllocate, Storage)]
+    #[derive(Default, Storage)]
     pub struct Shiden34Contract {
         #[storage_field]
         psp34: psp34::Data<enumerable::Balances>,
-        #[storage_field]
-        guard: reentrancy_guard::Data,
         #[storage_field]
         ownable: ownable::Data,
         #[storage_field]
@@ -90,43 +87,46 @@ pub mod shiden34 {
             refund_shares: Vec<Percentage>, // TO DO: test for input
             refund_address: AccountId,
         ) -> Self {
-            ink_lang::codegen::initialize_contract(|instance: &mut Shiden34Contract| {
-                instance._init_with_owner(instance.env().caller());
-                let collection_id = instance.collection_id();
-                instance._set_attribute(collection_id.clone(), String::from("name"), name);
-                instance._set_attribute(collection_id.clone(), String::from("symbol"), symbol);
-                instance._set_attribute(collection_id, String::from("baseUri"), base_uri);
-                instance.launchpad.max_supply = max_supply;
-                instance.launchpad.price_per_mint = price_per_mint;
-                instance.launchpad.last_token_id = 0;
-                instance.launchpad.max_amount = 10;
-                instance.launchpad.token_set =
-                    (1..max_supply + 1).map(u64::from).collect::<Vec<u64>>();
-                instance.launchpad.pseudo_random_salt = 0;
-                instance.launchpad.project_account_id = project_account_id;
-                instance.launchpad.prepresale_start_at = prepresale_start_at;
-                instance.launchpad.presale_start_at = presale_start_at;
-                instance.launchpad.public_sale_start_at = public_sale_start_at;
-                instance.launchpad.public_sale_end_at = public_sale_end_at;
-                assert_eq!(refund_periods.len(), refund_shares.len()); // TO DO: test if length is not the same
-                                                                       // To Do : assert that refund_periods are in increasing pattern
-                instance.launchpad.refund_periods = refund_periods;
-                instance.launchpad.refund_shares = refund_shares;
-                instance.launchpad.refund_address = refund_address;
-            })
+            let mut instance = Self::default();
+
+            instance._init_with_owner(instance.env().caller());
+            let collection_id = instance.collection_id();
+            instance._set_attribute(collection_id.clone(), String::from("name"), name);
+            instance._set_attribute(collection_id.clone(), String::from("symbol"), symbol);
+            instance._set_attribute(collection_id, String::from("baseUri"), base_uri);
+            instance.launchpad.max_supply = max_supply;
+            instance.launchpad.price_per_mint = price_per_mint;
+            instance.launchpad.last_token_id = 0;
+            instance.launchpad.max_amount = 10;
+            instance.launchpad.token_set = (1..max_supply + 1).map(u64::from).collect::<Vec<u64>>();
+            instance.launchpad.pseudo_random_salt = 0;
+            instance.launchpad.project_account_id = Some(project_account_id);
+            instance.launchpad.prepresale_start_at = prepresale_start_at;
+            instance.launchpad.presale_start_at = presale_start_at;
+            instance.launchpad.public_sale_start_at = public_sale_start_at;
+            instance.launchpad.public_sale_end_at = public_sale_end_at;
+
+            // dont use assert
+            assert_eq!(refund_periods.len(), refund_shares.len()); // TO DO: test if length is not the same
+                                                                   // To Do : assert that refund_periods are in increasing pattern
+            instance.launchpad.refund_periods = refund_periods;
+            instance.launchpad.refund_shares = refund_shares;
+            instance.launchpad.refund_address = Some(refund_address);
+
+            instance
         }
 
         #[ink(message)]
         #[modifiers(only_owner)]
         pub fn set_code(&mut self, code_hash: [u8; 32]) -> Result<(), PSP34Error> {
             // TO DO: test set_code
-            ink_env::set_code_hash(&code_hash).unwrap_or_else(|err| {
+            ink::env::set_code_hash(&code_hash).unwrap_or_else(|err| {
                 panic!(
                     "Failed to `set_code_hash` to {:?} due to {:?}",
                     code_hash, err
                 )
             });
-            ink_env::debug_println!("Switched code hash to {:?}.", code_hash);
+            ink::env::debug_println!("Switched code hash to {:?}.", code_hash);
             Ok(())
         }
     }
@@ -154,21 +154,22 @@ pub mod shiden34 {
     }
 
     impl Launchpad for Shiden34Contract {}
+    impl Psp34Traits for Shiden34Contract {}
 
     // ------------------- T E S T -----------------------------------------------------
     #[cfg(test)]
     mod tests {
         use super::*;
         use crate::shiden34::PSP34Error::*;
+        use ink::lang as ink;
+        use ink::prelude::string::String as PreludeString;
         use ink_env::{pay_with_call, test};
-        use ink_lang as ink;
-        use ink_prelude::string::String as PreludeString;
-        use launchpad_pkg::impls::launchpad::{launchpad::Internal, types::Shiden34Error};
+        use psp34_extension_pkg::impls::launchpad::{launchpad::Internal, types::Shiden34Error};
         const PRICE: Balance = 100_000_000_000_000_000;
         const BASE_URI: &str = "ipfs://myIpfsUri/";
         const MAX_SUPPLY: u64 = 10;
 
-        #[ink::test]
+        #[ink_test]
         fn init_works() {
             let sh34 = init();
             let collection_id = sh34.collection_id();
@@ -198,7 +199,7 @@ pub mod shiden34 {
             )
         }
 
-        #[ink::test]
+        #[ink_test]
         fn mint_single_works() {
             let mut sh34 = init();
             let accounts = default_accounts();
@@ -217,7 +218,7 @@ pub mod shiden34 {
             assert_eq!(1, ink_env::test::recorded_events().count());
         }
 
-        #[ink::test]
+        #[ink_test]
         fn mint_multiple_works() {
             let mut sh34 = init();
             let accounts = default_accounts();
@@ -251,7 +252,7 @@ pub mod shiden34 {
             );
         }
 
-        #[ink::test]
+        #[ink_test]
         fn mint_above_limit_fails() {
             let mut sh34 = init();
             let accounts = default_accounts();
@@ -269,7 +270,7 @@ pub mod shiden34 {
             );
         }
 
-        #[ink::test]
+        #[ink_test]
         fn mint_low_value_fails() {
             let mut sh34 = init();
             let accounts = default_accounts();
@@ -294,7 +295,7 @@ pub mod shiden34 {
             assert_eq!(sh34.total_supply(), 0);
         }
 
-        #[ink::test]
+        #[ink_test]
         fn withdrawal_works() {
             let mut sh34 = init();
             let accounts = default_accounts();
@@ -316,7 +317,7 @@ pub mod shiden34 {
             // assert_eq!(sh34.env().balance(), sh34.env().minimum_balance());
         }
 
-        #[ink::test]
+        #[ink_test]
         fn token_uri_works() {
             let mut sh34 = init();
             let accounts = default_accounts();
@@ -350,7 +351,7 @@ pub mod shiden34 {
             assert_eq!(sh34.owner(), accounts.alice);
         }
 
-        #[ink::test]
+        #[ink_test]
         fn set_base_uri_works() {
             let accounts = default_accounts();
             const NEW_BASE_URI: &str = "new_uri/";
@@ -398,7 +399,7 @@ pub mod shiden34 {
             );
         }
 
-        #[ink::test]
+        #[ink_test]
         fn check_value_overflow_ok() {
             let max_supply = u64::MAX;
             let price = u128::MAX as u128;

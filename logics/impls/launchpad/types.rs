@@ -1,9 +1,9 @@
-use ink_prelude::vec::Vec;
-use ink_storage::Mapping;
+use ink::prelude::vec::Vec;
+use ink::storage::Mapping;
 use openbrush::traits::{Balance, String};
 pub const STORAGE_KEY: u32 = openbrush::storage_unique_key!(Data);
 
-use ink_env::AccountId;
+use ink::primitives::AccountId;
 pub type MilliSeconds = u64;
 pub type Percentage = u128;
 pub type TokenId = u64;
@@ -19,7 +19,7 @@ pub struct Data {
     pub max_amount: u64,
     pub token_set: Vec<u64>,
     pub pseudo_random_salt: u64,
-    pub project_account_id: AccountId,
+    pub project_account_id: Option<AccountId>,
     // OG Sale, Presale, Public Sale timeline
     pub public_sale_start_at: u64,
     pub public_sale_end_at: u64,
@@ -32,7 +32,7 @@ pub struct Data {
     pub refund_periods: Vec<MilliSeconds>,
     pub refund_shares: Vec<Percentage>,
     pub has_refunded: Mapping<TokenId, bool>,
-    pub refund_address: AccountId,
+    pub refund_address: Option<AccountId>,
 }
 
 #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]

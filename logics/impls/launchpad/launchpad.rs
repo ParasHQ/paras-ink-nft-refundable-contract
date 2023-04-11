@@ -19,26 +19,20 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use ink_prelude::string::{String as PreludeString, ToString};
-
 use crate::impls::launchpad::types::{Data, Shiden34Error};
 pub use crate::traits::launchpad::Launchpad;
 
-use ink_prelude::vec::Vec;
+use ink::prelude::vec::Vec;
 use openbrush::{
     contracts::{
         ownable::*,
-        psp34::{
-            balances::BalancesManager,
-            extensions::{enumerable::*, metadata::*},
-        },
-        reentrancy_guard::*,
+        psp34::extensions::{enumerable::*, metadata::*},
     },
     modifiers,
     traits::{AccountId, Balance, Storage, String},
 };
 
-use ink_env::{hash, hash_bytes};
+use ink::env::{hash, hash_bytes};
 
 pub enum MintingStatus {
     Closed,
@@ -54,9 +48,6 @@ pub trait Internal {
 
     /// Check amount of tokens to be minted
     fn check_amount(&self, mint_amount: u64) -> Result<(), PSP34Error>;
-
-    /// Check if token is minted
-    fn token_exists(&self, id: Id) -> Result<(), PSP34Error>;
 
     fn get_pseudo_random(&mut self, max_amount: u64) -> u64;
 
@@ -79,14 +70,12 @@ impl<T> Launchpad for T
 where
     T: Storage<Data>
         + Storage<psp34::Data<enumerable::Balances>>
-        + Storage<reentrancy_guard::Data>
         + Storage<ownable::Data>
         + Storage<metadata::Data>
         + psp34::extensions::metadata::PSP34Metadata
         + psp34::Internal,
 {
     /// Mint one or more tokens
-    #[modifiers(non_reentrant)]
     default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error> {
         let caller_id = Self::env().caller();
         self.check_amount(mint_amount)?;
@@ -124,17 +113,6 @@ where
         return Ok(mint_id);
     }
 
-    /// Set new value for the baseUri
-    #[modifiers(only_owner)]
-    default fn set_base_uri(&mut self, uri: PreludeString) -> Result<(), PSP34Error> {
-        let id = self
-            .data::<psp34::Data<enumerable::Balances>>()
-            .collection_id();
-        self.data::<metadata::Data>()
-            ._set_attribute(id, String::from("baseUri"), uri.into_bytes());
-        Ok(())
-    }
-
     /// Withdraws funds to contract owner
     #[modifiers(only_owner)]
     default fn withdraw_launchpad(&mut self) -> Result<(), PSP34Error> {
@@ -157,15 +135,22 @@ where
                 Shiden34Error::RefundFailed.as_str(),
             )));
         } else {
-            let refund_address = self.data::<Data>().refund_address;
-            self._transfer_token(refund_address, Id::U64(token_id), Vec::new());
-            self.data::<Data>().has_refunded.insert(token_id, &true);
+            let refund_address = self.data::<Data>().refund_address.unwrap();
+            let res = self._transfer_token(refund_address, Id::U64(token_id), Vec::new());
+            match res {
+                Ok(_) => {
+                    self.data::<Data>().has_refunded.insert(token_id, &true);
 
-            Self::env()
-                .transfer(caller_id, refund_amount)
-                .map_err(|_| {
-                    PSP34Error::Custom(String::from(Shiden34Error::WithdrawalFailed.as_str()))
-                })?;
+                    Self::env()
+                        .transfer(caller_id, refund_amount)
+                        .map_err(|_| {
+                            PSP34Error::Custom(String::from(
+                                Shiden34Error::WithdrawalFailed.as_str(),
+                            ))
+                        })?;
+                }
+                _ => (),
+            };
             return Ok(());
         }
     }
@@ -178,20 +163,6 @@ where
         Ok(())
     }
 
-    /// Get URI from token ID
-    default fn token_uri(&self, token_id: u64) -> Result<PreludeString, PSP34Error> {
-        self.token_exists(Id::U64(token_id))?;
-        let value = self.get_attribute(
-            self.data::<psp34::Data<enumerable::Balances>>()
-                .collection_id(),
-            String::from("baseUri"),
-        );
-        let mut token_uri = PreludeString::from_utf8(value.unwrap()).unwrap();
-        token_uri = token_uri + &token_id.to_string() + &PreludeString::from(".json");
-        Ok(token_uri)
-    }
-
-    /// Get max supply of tokens
     default fn max_supply(&self) -> u64 {
         self.data::<Data>().max_supply
     }
@@ -248,7 +219,7 @@ where
     ) -> Result<(), PSP34Error> {
         let minting_status = self.get_current_minting_status();
 
-        let mut price;
+        let price;
         match minting_status {
             MintingStatus::Prepresale => price = self.data::<Data>().prepresale_price_per_mint,
             MintingStatus::Presale => price = self.data::<Data>().presale_price_per_mint,
@@ -289,14 +260,6 @@ where
         return Err(PSP34Error::Custom(String::from(
             Shiden34Error::CollectionIsFull.as_str(),
         )));
-    }
-
-    /// Check if token is minted
-    default fn token_exists(&self, id: Id) -> Result<(), PSP34Error> {
-        self.data::<psp34::Data<enumerable::Balances>>()
-            .owner_of(id)
-            .ok_or(PSP34Error::TokenNotExists)?;
-        Ok(())
     }
 
     default fn get_pseudo_random(&mut self, max_value: u64) -> u64 {
