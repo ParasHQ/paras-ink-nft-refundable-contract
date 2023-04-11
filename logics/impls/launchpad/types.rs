@@ -1,3 +1,4 @@
+use ink::prelude::collections::HashSet;
 use ink::prelude::vec::Vec;
 use ink::storage::Mapping;
 use openbrush::traits::{Balance, String};
@@ -9,10 +10,17 @@ pub type Percentage = u128;
 pub type TokenId = u64;
 pub type BlockTimestamp = u64;
 
+pub enum MintingStatus {
+    Closed,
+    Prepresale,
+    Presale,
+    Public,
+    End,
+}
+
 #[derive(Default, Debug)]
 #[openbrush::upgradeable_storage(STORAGE_KEY)]
 pub struct Data {
-    pub last_token_id: u64,
     pub collection_id: u32,
     pub max_supply: u64,
     pub price_per_mint: Balance,
@@ -20,7 +28,7 @@ pub struct Data {
     pub token_set: Vec<u64>,
     pub pseudo_random_salt: u64,
     pub project_account_id: Option<AccountId>,
-    // OG Sale, Presale, Public Sale timeline
+    pub forced_minting_status: Option<u64>,
     pub public_sale_start_at: u64,
     pub public_sale_end_at: u64,
     pub prepresale_start_at: u64,

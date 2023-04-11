@@ -19,7 +19,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use crate::impls::launchpad::types::{Data, Shiden34Error};
+use crate::impls::launchpad::types::{Data, MintingStatus, Shiden34Error};
 pub use crate::traits::launchpad::Launchpad;
 
 use ink::prelude::vec::Vec;
@@ -33,14 +33,6 @@ use openbrush::{
 };
 
 use ink::env::{hash, hash_bytes};
-
-pub enum MintingStatus {
-    Closed,
-    Prepresale,
-    Presale,
-    Public,
-    End,
-}
 
 pub trait Internal {
     /// Check if the transferred mint values is as expected
@@ -76,14 +68,13 @@ where
         + psp34::Internal,
 {
     /// Mint one or more tokens
-    default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error> {
+    default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
         self.check_amount(mint_amount)?;
         self.check_value(Self::env().transferred_value(), mint_amount)?;
         self.check_allowed_to_mint(caller_id, mint_amount)?;
 
         let mut token_ids = Vec::new();
-        let current_timestamp = Self::env().block_timestamp();
         for _ in 0..mint_amount {
             let mint_id = self.get_mint_id();
             self.data::<psp34::Data<enumerable::Balances>>()
@@ -92,25 +83,23 @@ where
             token_ids.push(mint_id);
         }
 
-        Ok(token_ids)
+        Ok(())
     }
 
     /// Mint next available token for the caller
-    default fn mint_next(&mut self) -> Result<u64, PSP34Error> {
+    default fn mint_next(&mut self) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
 
         self.check_amount(1)?;
         self.check_value(Self::env().transferred_value(), 1)?;
-        self.check_allowed_to_mint(caller_id, 1);
+        self.check_allowed_to_mint(caller_id, 1)?;
 
         let mint_id = self.get_mint_id();
         self.data::<psp34::Data<enumerable::Balances>>()
             ._mint_to(caller_id, Id::U64(mint_id))?;
 
         self._emit_transfer_event(None, Some(caller_id), Id::U64(mint_id));
-
-        let current_timestamp = Self::env().block_timestamp();
-        return Ok(mint_id);
+        return Ok(());
     }
 
     /// Withdraws funds to contract owner
@@ -203,6 +192,12 @@ where
             .presale_whitelisted
             .insert(account_id, &mint_amount);
         Ok(())
+    }
+
+    #[modifiers(only_owner)]
+    fn set_minting_status(&mut self, minting_status_index: Option<u64>) -> Result<(), PSP34Error> {
+        self.data::<Data>().forced_minting_status = minting_status_index;
+        return Ok(());
     }
 }
 
@@ -373,6 +368,19 @@ where
     }
 
     default fn get_current_minting_status(&self) -> MintingStatus {
+        if let Some(minting_status) = self.data::<Data>().forced_minting_status {
+            if minting_status == 0 {
+                return MintingStatus::Closed;
+            } else if minting_status == 1 {
+                return MintingStatus::Prepresale;
+            } else if minting_status == 2 {
+                return MintingStatus::Presale;
+            } else if minting_status == 3 {
+                return MintingStatus::Public;
+            } else if minting_status == 4 {
+                return MintingStatus::End;
+            }
+        }
         let current_timestamp = Self::env().block_timestamp();
 
         if current_timestamp > self.data::<Data>().public_sale_end_at

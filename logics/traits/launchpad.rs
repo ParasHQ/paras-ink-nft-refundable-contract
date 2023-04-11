@@ -1,5 +1,3 @@
-use ink::prelude::vec::Vec;
-
 use openbrush::{
     contracts::psp34::PSP34Error,
     traits::{AccountId, Balance},
@@ -12,11 +10,11 @@ pub type LaunchpadRef = dyn Launchpad;
 pub trait Launchpad {
     /// Mint one or more tokens
     #[ink(message, payable)]
-    fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<Vec<u64>, PSP34Error>;
+    fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<(), PSP34Error>;
 
     /// Mint next available token for the caller
     #[ink(message, payable)]
-    fn mint_next(&mut self) -> Result<u64, PSP34Error>;
+    fn mint_next(&mut self) -> Result<(), PSP34Error>;
 
     #[ink(message)]
     fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error>;
@@ -62,4 +60,7 @@ pub trait Launchpad {
         account_id: AccountId,
         mint_amount: u64,
     ) -> Result<(), PSP34Error>;
+
+    #[ink(message)]
+    fn set_minting_status(&mut self, minting_status_index: Option<u64>) -> Result<(), PSP34Error>;
 }
