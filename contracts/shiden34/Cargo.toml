@@ -22,9 +22,6 @@ crate-type = [
 	"cdylib",
 ]
 
-[profile.release]
-overflow-checks = false
-
 [features]
 default = ["std"]
 std = [
