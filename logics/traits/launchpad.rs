@@ -1,5 +1,5 @@
 use openbrush::{
-    contracts::psp34::PSP34Error,
+    contracts::psp34::{Id, PSP34Error},
     traits::{AccountId, Balance, String},
 };
 
@@ -66,4 +66,13 @@ pub trait Launchpad {
 
     #[ink(message)]
     fn get_minting_status(&self) -> String;
+
+    fn _emit_refund_event(
+        &self,
+        from: AccountId,
+        to: AccountId,
+        id: Option<Id>,
+        price: Balance,
+        refunded: Balance,
+    );
 }

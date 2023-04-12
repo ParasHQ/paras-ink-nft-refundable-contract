@@ -52,7 +52,7 @@ pub trait Internal {
 
     fn get_total_available_to_withdraw(&self) -> Balance;
 
-    fn get_refund_amount_internal(&self, token_id: u64) -> Balance;
+    fn get_refund_amount_and_price_internal(&self, token_id: u64) -> (Balance, Balance);
 
     fn check_allowed_to_mint(
         &mut self,
@@ -135,7 +135,7 @@ where
 
         assert_eq!(caller_id, self._owner_of(&Id::U64(token_id)).unwrap()); // To Do : check if assert works
 
-        let refund_amount = self.get_refund_amount_internal(token_id);
+        let (refund_amount, price) = self.get_refund_amount_and_price_internal(token_id);
 
         if refund_amount == 0 {
             return Err(PSP34Error::Custom(String::from(
@@ -155,6 +155,13 @@ where
                                 Shiden34Error::WithdrawalFailed.as_str(),
                             ))
                         })?;
+                    self._emit_refund_event(
+                        caller_id,
+                        refund_address,
+                        Some(Id::U64(token_id)),
+                        price,
+                        refund_amount,
+                    );
                 }
                 _ => (),
             };
@@ -185,7 +192,7 @@ where
     }
 
     default fn get_refund_amount(&self, token_id: u64) -> Balance {
-        self.get_refund_amount_internal(token_id)
+        self.get_refund_amount_and_price_internal(token_id).0
     }
 
     #[modifiers(only_owner)]
@@ -230,6 +237,16 @@ where
             MintingStatus::Public => return "public".as_bytes().to_vec(),
             MintingStatus::End => return "end".as_bytes().to_vec(),
         }
+    }
+
+    default fn _emit_refund_event(
+        &self,
+        from: AccountId,
+        to: AccountId,
+        id: Option<Id>,
+        price: Balance,
+        refunded: Balance,
+    ) {
     }
 }
 
@@ -370,10 +387,10 @@ where
         return 1;
     }
 
-    default fn get_refund_amount_internal(&self, token_id: u64) -> Balance {
+    default fn get_refund_amount_and_price_internal(&self, token_id: u64) -> (Balance, Balance) {
         let minting_type_index = self.data::<Data>().minting_type_for_token.get(token_id);
         if minting_type_index.is_none() {
-            return 0;
+            return (0, 0);
         }
         let current_timestamp = Self::env().block_timestamp();
 
@@ -392,11 +409,11 @@ where
 
                 let refund_amount: Balance = (price * refund_share).saturating_div(100); // TO DO: check accuracy
 
-                return refund_amount;
+                return (refund_amount, price);
             }
         }
 
-        return 0;
+        return (0, 0);
     }
 
     default fn get_current_minting_status(&self) -> MintingStatus {

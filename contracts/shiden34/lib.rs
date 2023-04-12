@@ -69,6 +69,19 @@ pub mod shiden34 {
         approved: bool,
     }
 
+    #[ink(event)]
+    pub struct Refund {
+        // Refund{from, to, id, price, refunded}
+        #[ink(topic)]
+        from: AccountId,
+        #[ink(topic)]
+        to: AccountId,
+        #[ink(topic)]
+        id: Option<Id>,
+        price: Balance,
+        refunded: Balance,
+    }
+
     impl Shiden34Contract {
         #[ink(constructor)]
         pub fn new(
@@ -151,7 +164,24 @@ pub mod shiden34 {
         }
     }
 
-    impl Launchpad for Shiden34Contract {}
+    impl Launchpad for Shiden34Contract {
+        fn _emit_refund_event(
+            &self,
+            from: AccountId,
+            to: AccountId,
+            id: Option<Id>,
+            price: Balance,
+            refunded: Balance,
+        ) {
+            self.env().emit_event(Refund {
+                from,
+                to,
+                id,
+                price,
+                refunded,
+            })
+        }
+    }
     impl Psp34Traits for Shiden34Contract {}
 
     // ------------------- T E S T -----------------------------------------------------
