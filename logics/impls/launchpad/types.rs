@@ -1,4 +1,3 @@
-use ink::prelude::collections::HashSet;
 use ink::prelude::vec::Vec;
 use ink::storage::Mapping;
 use openbrush::traits::{Balance, String};

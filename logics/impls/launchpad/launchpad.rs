@@ -74,13 +74,11 @@ where
         self.check_value(Self::env().transferred_value(), mint_amount)?;
         self.check_allowed_to_mint(caller_id, mint_amount)?;
 
-        let mut token_ids = Vec::new();
         for _ in 0..mint_amount {
             let mint_id = self.get_mint_id();
             self.data::<psp34::Data<enumerable::Balances>>()
                 ._mint_to(to, Id::U64(mint_id))?;
             self._emit_transfer_event(None, Some(to), Id::U64(mint_id));
-            token_ids.push(mint_id);
         }
 
         Ok(())
@@ -195,9 +193,23 @@ where
     }
 
     #[modifiers(only_owner)]
-    fn set_minting_status(&mut self, minting_status_index: Option<u64>) -> Result<(), PSP34Error> {
+    default fn set_minting_status(
+        &mut self,
+        minting_status_index: Option<u64>,
+    ) -> Result<(), PSP34Error> {
         self.data::<Data>().forced_minting_status = minting_status_index;
         return Ok(());
+    }
+
+    default fn get_minting_status(&self) -> String {
+        let minting_status = self.get_current_minting_status();
+        match minting_status {
+            MintingStatus::Closed => return "closed".as_bytes().to_vec(),
+            MintingStatus::Prepresale => return "prepresale".as_bytes().to_vec(),
+            MintingStatus::Presale => return "presale".as_bytes().to_vec(),
+            MintingStatus::Public => return "public".as_bytes().to_vec(),
+            MintingStatus::End => return "end".as_bytes().to_vec(),
+        }
     }
 }
 
@@ -214,14 +226,13 @@ where
     ) -> Result<(), PSP34Error> {
         let minting_status = self.get_current_minting_status();
 
-        let price;
-        match minting_status {
-            MintingStatus::Prepresale => price = self.data::<Data>().prepresale_price_per_mint,
-            MintingStatus::Presale => price = self.data::<Data>().presale_price_per_mint,
-            MintingStatus::Public => price = self.data::<Data>().price_per_mint,
+        let price = match minting_status {
+            MintingStatus::Prepresale => self.data::<Data>().prepresale_price_per_mint,
+            MintingStatus::Presale => self.data::<Data>().presale_price_per_mint,
+            MintingStatus::Public => self.data::<Data>().price_per_mint,
             _ => {
                 return Err(PSP34Error::Custom(String::from(
-                    Shiden34Error::BadMintValue.as_str(),
+                    Shiden34Error::UnableToMint.as_str(),
                 )))
             }
         };

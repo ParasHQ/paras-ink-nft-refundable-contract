@@ -1,6 +1,6 @@
 use openbrush::{
     contracts::psp34::PSP34Error,
-    traits::{AccountId, Balance},
+    traits::{AccountId, Balance, String},
 };
 
 #[openbrush::wrapper]
@@ -63,4 +63,7 @@ pub trait Launchpad {
 
     #[ink(message)]
     fn set_minting_status(&mut self, minting_status_index: Option<u64>) -> Result<(), PSP34Error>;
+
+    #[ink(message)]
+    fn get_minting_status(&self) -> String;
 }
