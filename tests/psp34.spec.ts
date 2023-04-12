@@ -55,6 +55,8 @@ describe("Minting psp34 tokens", () => {
           PRICE_PER_MINT,
           projectAccount.address,
           0,
+          0,
+          0,
           1711626898000,
           [],
           [],
@@ -70,17 +72,17 @@ describe("Minting psp34 tokens", () => {
     await setup();
     const queryList = await contract.query;
     expect(
-      (await contract.query.totalSupply()).value.rawNumber.toNumber()
+      (await contract.query.totalSupply()).value.unwrap().toNumber()
     ).to.equal(0);
-    expect((await contract.query.owner()).value).to.equal(deployer.address);
-    expect((await contract.query.maxSupply()).value).to.equal(MAX_SUPPLY);
-    expect((await contract.query.price()).value.rawNumber.toString()).to.equal(
+    expect((await contract.query.owner()).value.unwrap()).to.equal(
+      deployer.address
+    );
+    expect((await contract.query.maxSupply()).value.unwrap()).to.equal(
+      MAX_SUPPLY
+    );
+    expect((await contract.query.price()).value.unwrap().toString()).to.equal(
       PRICE_PER_MINT.toString()
     );
-    const collectionId = await contract.query.collectionId();
-
-    // expect((await contract.query.getAttribute({u128: collectionId}, ["baseUri"])).value).to.equal(BASE_URI);
-    // expect((await contract.query.getAttribute(collectionId, ["baseUri"])).value).to.equal(BASE_URI);
   });
 
   it("Use mintNext works", async () => {
@@ -88,25 +90,25 @@ describe("Minting psp34 tokens", () => {
     const tokenId: Id = IdBuilder.U64(1);
 
     expect(
-      (await contract.query.totalSupply()).value.rawNumber.toNumber()
+      (await contract.query.totalSupply()).value.unwrap().toNumber()
     ).to.equal(0);
 
     // mint
     const { gasRequired } = await contract.withSigner(bob).query.mintNext();
     let mintResult = await contract
       .withSigner(bob)
-      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired * 2n });
+      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired });
 
     // verify minting results. The totalSupply value is BN
     expect(
-      (await contract.query.totalSupply()).value.rawNumber.toNumber()
+      (await contract.query.totalSupply()).value.unwrap().toNumber()
     ).to.equal(1);
-    expect((await contract.query.balanceOf(bob.address)).value).to.equal(1);
+    expect((await contract.query.balanceOf(bob.address)).value.ok).to.equal(1);
 
     const firstTokenId = IdBuilder.U64(
-      (await contract.query.tokenByIndex(0)).value.ok.u64
+      (await contract.query.tokenByIndex(0)).value.unwrap().ok.u64
     );
-    expect((await contract.query.ownerOf(firstTokenId)).value).to.equal(
+    expect((await contract.query.ownerOf(firstTokenId)).value.ok).to.equal(
       bob.address
     );
     emit(mintResult, "Transfer", {
@@ -114,17 +116,18 @@ describe("Minting psp34 tokens", () => {
       to: bob.address,
       id: firstTokenId,
     });
-
-    // TODO verify tokenUri call
-    // console.log("tokenUri", (await contract.query.tokenUri(1)).value);
-    // expect((await contract.query.tokenUri(1))).to.equal(TOKEN_URI_1);
   });
 
   it("Mint 5 tokens works", async () => {
     await setup();
 
+    await contract.withSigner(deployer).tx.setMintingStatus(3);
+
+    expect((await contract.query.getMintingStatus()).value.ok).to.equal(
+      "0x7075626c6963"
+    ); // public
     expect(
-      (await contract.query.totalSupply()).value.rawNumber.toNumber()
+      (await contract.query.totalSupply()).value.unwrap().toNumber()
     ).to.equal(0);
 
     const gasRequiredMaxAmount = (
@@ -134,23 +137,19 @@ describe("Minting psp34 tokens", () => {
       .withSigner(deployer)
       .tx.setMaxMintAmount(5, { gasLimit: gasRequiredMaxAmount });
 
-    const { gasRequired } = await contract
-      .withSigner(bob)
-      .query.mint(bob.address, 5);
     await contract.withSigner(bob).tx.mint(bob.address, 5, {
       value: PRICE_PER_MINT.muln(5),
-      gasLimit: gasRequired * 2n,
     });
 
     expect(
-      (await contract.query.totalSupply()).value.rawNumber.toNumber()
+      (await contract.query.totalSupply()).value.unwrap().toNumber()
     ).to.equal(5);
 
     const lastTokenId = IdBuilder.U64(
-      (await contract.query.tokenByIndex(4)).value.ok.u64
+      (await contract.query.tokenByIndex(4)).value.unwrap().ok.u64
     );
 
-    expect((await contract.query.ownerOf(lastTokenId)).value).to.equal(
+    expect((await contract.query.ownerOf(lastTokenId)).value.ok).to.equal(
       bob.address
     );
   });
@@ -162,10 +161,10 @@ describe("Minting psp34 tokens", () => {
     let { gasRequired } = await contract.withSigner(bob).query.mintNext();
     let mintResult = await contract
       .withSigner(bob)
-      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired * 2n });
+      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired });
 
     const firstTokenId = IdBuilder.U64(
-      (await contract.query.tokenByIndex(0)).value.ok.u64
+      (await contract.query.tokenByIndex(0)).value.unwrap().ok.u64
     );
 
     emit(mintResult, "Transfer", {
@@ -187,10 +186,10 @@ describe("Minting psp34 tokens", () => {
       });
 
     // Verify transfer
-    expect((await contract.query.ownerOf(firstTokenId)).value).to.equal(
+    expect((await contract.query.ownerOf(firstTokenId)).value.ok).to.equal(
       deployer.address
     );
-    expect((await contract.query.balanceOf(bob.address)).value).to.equal(0);
+    expect((await contract.query.balanceOf(bob.address)).value.ok).to.equal(0);
     emit(transferResult, "Transfer", {
       from: bob.address,
       to: deployer.address,
@@ -205,10 +204,10 @@ describe("Minting psp34 tokens", () => {
     let { gasRequired } = await contract.withSigner(bob).query.mintNext();
     await contract
       .withSigner(bob)
-      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired * 2n });
+      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired });
 
     const firstTokenId = IdBuilder.U64(
-      (await contract.query.tokenByIndex(0)).value.ok.u64
+      (await contract.query.tokenByIndex(0)).value.unwrap().ok.u64
     );
 
     // Bob approves deployer to be operator of the token
@@ -224,7 +223,7 @@ describe("Minting psp34 tokens", () => {
       });
 
     // Verify that Bob is still the owner and allowance is set
-    expect((await contract.query.ownerOf(firstTokenId)).value).to.equal(
+    expect((await contract.query.ownerOf(firstTokenId)).value.ok).to.equal(
       bob.address
     );
     expect(
@@ -234,7 +233,7 @@ describe("Minting psp34 tokens", () => {
           deployer.address,
           firstTokenId
         )
-      ).value
+      ).value.ok
     ).to.equal(true);
     emit(approveResult, "Approval", {
       from: bob.address,
@@ -249,7 +248,9 @@ describe("Minting psp34 tokens", () => {
 
     // Bob tries to mint without funding
     let mintResult = await contract.withSigner(bob).query.mintNext();
-    expect(hex2a(mintResult.value.err.custom)).to.be.equal("BadMintValue");
+    expect(hex2a(mintResult.value.unwrap().err.custom)).to.be.equal(
+      "BadMintValue"
+    );
   });
 });
 
