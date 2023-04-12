@@ -36,7 +36,12 @@ use ink::env::{hash, hash_bytes};
 
 pub trait Internal {
     /// Check if the transferred mint values is as expected
-    fn check_value(&self, transferred_value: u128, mint_amount: u64) -> Result<(), PSP34Error>;
+    fn check_value(
+        &self,
+        transferred_value: u128,
+        mint_amount: u64,
+        minting_status: &MintingStatus,
+    ) -> Result<(), PSP34Error>;
 
     /// Check amount of tokens to be minted
     fn check_amount(&self, mint_amount: u64) -> Result<(), PSP34Error>;
@@ -53,6 +58,7 @@ pub trait Internal {
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
+        minting_status: &MintingStatus,
     ) -> Result<(), PSP34Error>;
 
     fn get_current_minting_status(&self) -> MintingStatus;
@@ -70,15 +76,24 @@ where
     /// Mint one or more tokens
     default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
+        let minting_status = self.get_current_minting_status();
+
         self.check_amount(mint_amount)?;
-        self.check_value(Self::env().transferred_value(), mint_amount)?;
-        self.check_allowed_to_mint(caller_id, mint_amount)?;
+        self.check_value(
+            Self::env().transferred_value(),
+            mint_amount,
+            &minting_status,
+        )?;
+        self.check_allowed_to_mint(caller_id, mint_amount, &minting_status)?;
 
         for _ in 0..mint_amount {
             let mint_id = self.get_mint_id();
             self.data::<psp34::Data<enumerable::Balances>>()
                 ._mint_to(to, Id::U64(mint_id))?;
             self._emit_transfer_event(None, Some(to), Id::U64(mint_id));
+            self.data::<Data>()
+                .minting_type_for_token
+                .insert(mint_id, &minting_status.to_index());
         }
 
         Ok(())
@@ -87,16 +102,21 @@ where
     /// Mint next available token for the caller
     default fn mint_next(&mut self) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
+        let minting_status = self.get_current_minting_status();
 
         self.check_amount(1)?;
-        self.check_value(Self::env().transferred_value(), 1)?;
-        self.check_allowed_to_mint(caller_id, 1)?;
+        self.check_value(Self::env().transferred_value(), 1, &minting_status)?;
+        self.check_allowed_to_mint(caller_id, 1, &minting_status)?;
 
         let mint_id = self.get_mint_id();
         self.data::<psp34::Data<enumerable::Balances>>()
             ._mint_to(caller_id, Id::U64(mint_id))?;
 
         self._emit_transfer_event(None, Some(caller_id), Id::U64(mint_id));
+
+        self.data::<Data>()
+            .minting_type_for_token
+            .insert(mint_id, &minting_status.to_index());
         return Ok(());
     }
 
@@ -126,7 +146,7 @@ where
             let res = self._transfer_token(refund_address, Id::U64(token_id), Vec::new());
             match res {
                 Ok(_) => {
-                    self.data::<Data>().has_refunded.insert(token_id, &true);
+                    self.data::<Data>().minting_type_for_token.remove(token_id);
 
                     Self::env()
                         .transfer(caller_id, refund_amount)
@@ -195,7 +215,7 @@ where
     #[modifiers(only_owner)]
     default fn set_minting_status(
         &mut self,
-        minting_status_index: Option<u64>,
+        minting_status_index: Option<u8>,
     ) -> Result<(), PSP34Error> {
         self.data::<Data>().forced_minting_status = minting_status_index;
         return Ok(());
@@ -223,9 +243,8 @@ where
         &self,
         transferred_value: u128,
         mint_amount: u64,
+        minting_status: &MintingStatus,
     ) -> Result<(), PSP34Error> {
-        let minting_status = self.get_current_minting_status();
-
         let price = match minting_status {
             MintingStatus::Prepresale => self.data::<Data>().prepresale_price_per_mint,
             MintingStatus::Presale => self.data::<Data>().presale_price_per_mint,
@@ -294,9 +313,8 @@ where
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
+        minting_status: &MintingStatus,
     ) -> Result<(), PSP34Error> {
-        let minting_status = self.get_current_minting_status();
-
         match minting_status {
             MintingStatus::Closed => {
                 return Err(PSP34Error::Custom(String::from(
@@ -353,23 +371,26 @@ where
     }
 
     default fn get_refund_amount_internal(&self, token_id: u64) -> Balance {
-        if !self
-            .data::<Data>()
-            .has_refunded
-            .get(token_id)
-            .unwrap_or(false)
-        {
+        let minting_type_index = self.data::<Data>().minting_type_for_token.get(token_id);
+        if minting_type_index.is_none() {
             return 0;
         }
         let current_timestamp = Self::env().block_timestamp();
+
+        let price: u128 = if minting_type_index.unwrap() == 1 {
+            self.data::<Data>().prepresale_price_per_mint
+        } else if minting_type_index.unwrap() == 2 {
+            self.data::<Data>().presale_price_per_mint
+        } else {
+            self.data::<Data>().price_per_mint
+        };
 
         for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
             if current_timestamp < (self.data::<Data>().public_sale_end_at + refund_period) {
                 let refund_share: Balance =
                     *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
 
-                let refund_amount: Balance =
-                    (self.data::<Data>().price_per_mint * refund_share).saturating_div(100);
+                let refund_amount: Balance = (price * refund_share).saturating_div(100); // TO DO: check accuracy
 
                 return refund_amount;
             }
@@ -380,17 +401,7 @@ where
 
     default fn get_current_minting_status(&self) -> MintingStatus {
         if let Some(minting_status) = self.data::<Data>().forced_minting_status {
-            if minting_status == 0 {
-                return MintingStatus::Closed;
-            } else if minting_status == 1 {
-                return MintingStatus::Prepresale;
-            } else if minting_status == 2 {
-                return MintingStatus::Presale;
-            } else if minting_status == 3 {
-                return MintingStatus::Public;
-            } else if minting_status == 4 {
-                return MintingStatus::End;
-            }
+            return MintingStatus::from(minting_status);
         }
         let current_timestamp = Self::env().block_timestamp();
 

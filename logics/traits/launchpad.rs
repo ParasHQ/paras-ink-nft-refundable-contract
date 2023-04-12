@@ -62,7 +62,7 @@ pub trait Launchpad {
     ) -> Result<(), PSP34Error>;
 
     #[ink(message)]
-    fn set_minting_status(&mut self, minting_status_index: Option<u64>) -> Result<(), PSP34Error>;
+    fn set_minting_status(&mut self, minting_status_index: Option<u8>) -> Result<(), PSP34Error>;
 
     #[ink(message)]
     fn get_minting_status(&self) -> String;

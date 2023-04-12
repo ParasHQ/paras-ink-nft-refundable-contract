@@ -17,6 +17,34 @@ pub enum MintingStatus {
     End,
 }
 
+pub type MintingStatusIndex = u8;
+
+impl MintingStatus {
+    pub fn to_index(&self) -> u8 {
+        match self {
+            MintingStatus::Closed => return 0,
+            MintingStatus::Prepresale => return 1,
+            MintingStatus::Presale => return 2,
+            MintingStatus::Public => return 3,
+            MintingStatus::End => return 4,
+        }
+    }
+
+    pub fn from(index: u8) -> Self {
+        if index == 0 {
+            return MintingStatus::Closed;
+        } else if index == 1 {
+            return MintingStatus::Prepresale;
+        } else if index == 2 {
+            return MintingStatus::Presale;
+        } else if index == 3 {
+            return MintingStatus::Public;
+        } else {
+            return MintingStatus::End;
+        }
+    }
+}
+
 #[derive(Default, Debug)]
 #[openbrush::upgradeable_storage(STORAGE_KEY)]
 pub struct Data {
@@ -27,7 +55,7 @@ pub struct Data {
     pub token_set: Vec<u64>,
     pub pseudo_random_salt: u64,
     pub project_account_id: Option<AccountId>,
-    pub forced_minting_status: Option<u64>,
+    pub forced_minting_status: Option<u8>,
     pub public_sale_start_at: u64,
     pub public_sale_end_at: u64,
     pub prepresale_start_at: u64,
@@ -38,8 +66,8 @@ pub struct Data {
     pub presale_whitelisted: Mapping<AccountId, u64>,
     pub refund_periods: Vec<MilliSeconds>,
     pub refund_shares: Vec<Percentage>,
-    pub has_refunded: Mapping<TokenId, bool>,
     pub refund_address: Option<AccountId>,
+    pub minting_type_for_token: Mapping<TokenId, MintingStatusIndex>,
 }
 
 #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
