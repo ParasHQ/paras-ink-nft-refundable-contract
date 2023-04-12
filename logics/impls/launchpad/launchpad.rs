@@ -50,9 +50,11 @@ pub trait Internal {
 
     fn get_mint_id(&mut self) -> u64;
 
-    fn get_total_available_to_withdraw(&self) -> Balance;
-
     fn get_refund_amount_and_price_internal(&self, token_id: u64) -> (Balance, Balance);
+
+    fn get_available_to_withdraw_launchpad_internal(&self) -> Balance;
+
+    fn get_available_to_withdraw_project_internal(&self) -> Balance;
 
     fn check_allowed_to_mint(
         &mut self,
@@ -77,13 +79,10 @@ where
     default fn mint(&mut self, to: AccountId, mint_amount: u64) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
         let minting_status = self.get_current_minting_status();
+        let transferred_value = Self::env().transferred_value();
 
         self.check_amount(mint_amount)?;
-        self.check_value(
-            Self::env().transferred_value(),
-            mint_amount,
-            &minting_status,
-        )?;
+        self.check_value(transferred_value, mint_amount, &minting_status)?;
         self.check_allowed_to_mint(caller_id, mint_amount, &minting_status)?;
 
         for _ in 0..mint_amount {
@@ -96,6 +95,7 @@ where
                 .insert(mint_id, &minting_status.to_index());
         }
 
+        self.data::<Data>().total_sales += transferred_value;
         Ok(())
     }
 
@@ -103,9 +103,10 @@ where
     default fn mint_next(&mut self) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
         let minting_status = self.get_current_minting_status();
+        let transferred_value = Self::env().transferred_value();
 
         self.check_amount(1)?;
-        self.check_value(Self::env().transferred_value(), 1, &minting_status)?;
+        self.check_value(transferred_value, 1, &minting_status)?;
         self.check_allowed_to_mint(caller_id, 1, &minting_status)?;
 
         let mint_id = self.get_mint_id();
@@ -117,17 +118,55 @@ where
         self.data::<Data>()
             .minting_type_for_token
             .insert(mint_id, &minting_status.to_index());
+
+        self.data::<Data>().total_sales += transferred_value;
         return Ok(());
     }
 
     /// Withdraws funds to contract owner
     #[modifiers(only_owner)]
     default fn withdraw_launchpad(&mut self) -> Result<(), PSP34Error> {
+        let caller_id = Self::env().caller();
+
+        let available_to_withdraw = self.get_available_to_withdraw_launchpad_internal();
+
+        self.data::<Data>().withdrawn_sales_launchpad += available_to_withdraw;
+
+        Self::env()
+            .transfer(caller_id, available_to_withdraw)
+            .map_err(|_| {
+                PSP34Error::Custom(String::from(Shiden34Error::WithdrawalFailed.as_str()))
+            })?;
         return Ok(());
     }
 
     default fn withdraw_project(&mut self) -> Result<(), PSP34Error> {
+        let caller_id = Self::env().caller();
+
+        if caller_id != self.data::<Data>().project_account_id.unwrap() {
+            return Err(PSP34Error::Custom(String::from(
+                Shiden34Error::Unauthorized.as_str(),
+            )));
+        }
+
+        let available_to_withdraw = self.get_available_to_withdraw_project_internal();
+
+        self.data::<Data>().withdrawn_sales_project += available_to_withdraw;
+
+        Self::env()
+            .transfer(caller_id, available_to_withdraw)
+            .map_err(|_| {
+                PSP34Error::Custom(String::from(Shiden34Error::WithdrawalFailed.as_str()))
+            })?;
         return Ok(());
+    }
+
+    default fn get_available_to_withdraw_launchpad(&self) -> Balance {
+        self.get_available_to_withdraw_launchpad_internal()
+    }
+
+    default fn get_available_to_withdraw_project(&self) -> Balance {
+        self.get_available_to_withdraw_launchpad_internal()
     }
 
     default fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error> {
@@ -196,7 +235,7 @@ where
     }
 
     #[modifiers(only_owner)]
-    default fn add_whitelisted_account_to_prepresale(
+    default fn add_account_to_prepresale(
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
@@ -208,7 +247,7 @@ where
     }
 
     #[modifiers(only_owner)]
-    default fn add_whitelisted_account_to_presale(
+    default fn add_account_to_presale(
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
@@ -247,6 +286,20 @@ where
         price: Balance,
         refunded: Balance,
     ) {
+    }
+
+    default fn get_account_prepresale_minting_amount(&self, account_id: AccountId) -> u64 {
+        self.data::<Data>()
+            .prepresale_whitelisted
+            .get(account_id)
+            .unwrap_or(0)
+    }
+
+    default fn get_account_presale_minting_amount(&self, account_id: AccountId) -> u64 {
+        self.data::<Data>()
+            .presale_whitelisted
+            .get(account_id)
+            .unwrap_or(0)
     }
 }
 
@@ -383,10 +436,6 @@ where
         return Ok(());
     }
 
-    fn get_total_available_to_withdraw(&self) -> Balance {
-        return 1;
-    }
-
     default fn get_refund_amount_and_price_internal(&self, token_id: u64) -> (Balance, Balance) {
         let minting_type_index = self.data::<Data>().minting_type_for_token.get(token_id);
         if minting_type_index.is_none() {
@@ -439,5 +488,58 @@ where
         } else {
             return MintingStatus::Closed;
         }
+    }
+    fn get_available_to_withdraw_launchpad_internal(&self) -> Balance {
+        let minting_status = self.get_current_minting_status();
+        if minting_status != MintingStatus::End {
+            return 0;
+        }
+
+        let current_timestamp = Self::env().block_timestamp();
+
+        let total_withdraw_share: u128 = {
+            for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
+                if current_timestamp < (self.data::<Data>().public_sale_end_at + refund_period) {
+                    let non_refundable_percentage: Balance =
+                        100 - *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
+
+                    return (non_refundable_percentage * self.data::<Data>().total_sales)
+                        .saturating_div(100);
+                }
+            }
+            0
+        };
+
+        let launchpad_share =
+            (total_withdraw_share * self.data::<Data>().launchpad_fee).saturating_div(100);
+
+        self.data::<Data>().withdrawn_sales_launchpad - launchpad_share
+    }
+
+    fn get_available_to_withdraw_project_internal(&self) -> Balance {
+        let minting_status = self.get_current_minting_status();
+        if minting_status != MintingStatus::End {
+            return 0;
+        }
+
+        let current_timestamp = Self::env().block_timestamp();
+
+        let total_withdraw_share: u128 = {
+            for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
+                if current_timestamp < (self.data::<Data>().public_sale_end_at + refund_period) {
+                    let non_refundable_percentage: Balance =
+                        100 - *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
+
+                    return (non_refundable_percentage * self.data::<Data>().total_sales)
+                        .saturating_div(100);
+                }
+            }
+            0
+        };
+
+        let project_share =
+            (total_withdraw_share * (100 - self.data::<Data>().launchpad_fee)).saturating_div(100);
+
+        self.data::<Data>().withdrawn_sales_project - project_share
     }
 }

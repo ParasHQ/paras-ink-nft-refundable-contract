@@ -23,6 +23,12 @@ pub trait Launchpad {
     #[ink(message)]
     fn get_refund_amount(&self, token_id: u64) -> Balance;
 
+    #[ink(message)]
+    fn get_available_to_withdraw_launchpad(&self) -> Balance;
+
+    #[ink(message)]
+    fn get_available_to_withdraw_project(&self) -> Balance;
+
     /// Withdraw funds to contract owner
     #[ink(message)]
     fn withdraw_launchpad(&mut self) -> Result<(), PSP34Error>;
@@ -48,18 +54,24 @@ pub trait Launchpad {
     fn get_max_mint_amount(&mut self) -> u64;
 
     #[ink(message)]
-    fn add_whitelisted_account_to_prepresale(
+    fn add_account_to_prepresale(
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
     ) -> Result<(), PSP34Error>;
 
     #[ink(message)]
-    fn add_whitelisted_account_to_presale(
+    fn add_account_to_presale(
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
     ) -> Result<(), PSP34Error>;
+
+    #[ink(message)]
+    fn get_account_prepresale_minting_amount(&self, account_id: AccountId) -> u64;
+
+    #[ink(message)]
+    fn get_account_presale_minting_amount(&self, account_id: AccountId) -> u64;
 
     #[ink(message)]
     fn set_minting_status(&mut self, minting_status_index: Option<u8>) -> Result<(), PSP34Error>;

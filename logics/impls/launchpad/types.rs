@@ -9,6 +9,7 @@ pub type Percentage = u128;
 pub type TokenId = u64;
 pub type BlockTimestamp = u64;
 
+#[derive(PartialEq)]
 pub enum MintingStatus {
     Closed,
     Prepresale,
@@ -68,6 +69,10 @@ pub struct Data {
     pub refund_shares: Vec<Percentage>,
     pub refund_address: Option<AccountId>,
     pub minting_type_for_token: Mapping<TokenId, MintingStatusIndex>,
+    pub total_sales: Balance,
+    pub withdrawn_sales_project: Balance,
+    pub withdrawn_sales_launchpad: Balance,
+    pub launchpad_fee: Percentage,
 }
 
 #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
@@ -81,6 +86,7 @@ pub enum Shiden34Error {
     WithdrawalFailed,
     UnableToMint,
     RefundFailed,
+    Unauthorized,
 }
 
 impl Shiden34Error {
@@ -93,6 +99,7 @@ impl Shiden34Error {
             Shiden34Error::WithdrawalFailed => String::from("WithdrawalFailed"),
             Shiden34Error::UnableToMint => String::from("UnableToMint"),
             Shiden34Error::RefundFailed => String::from("RefundFailed"),
+            Shiden34Error::Unauthorized => String::from("Unauthorized"),
         }
     }
 }

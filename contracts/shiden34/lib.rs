@@ -98,6 +98,7 @@ pub mod shiden34 {
             refund_periods: Vec<MilliSeconds>,
             refund_shares: Vec<Percentage>,
             refund_address: AccountId,
+            launchpad_fee: Percentage,
         ) -> Self {
             let mut instance = Self::default();
 
@@ -118,11 +119,14 @@ pub mod shiden34 {
             instance.launchpad.public_sale_end_at = public_sale_end_at;
 
             // dont use assert
-            assert_eq!(refund_periods.len(), refund_shares.len()); // TO DO: test if length is not the same
-                                                                   // To Do : assert that refund_periods are in increasing pattern
+            assert_eq!(refund_periods.len(), refund_shares.len());
             instance.launchpad.refund_periods = refund_periods;
             instance.launchpad.refund_shares = refund_shares;
             instance.launchpad.refund_address = Some(refund_address);
+            instance.launchpad.total_sales = 0;
+            instance.launchpad.withdrawn_sales_launchpad = 0;
+            instance.launchpad.withdrawn_sales_project = 0;
+            instance.launchpad.launchpad_fee = launchpad_fee;
 
             instance
         }
@@ -235,6 +239,7 @@ pub mod shiden34 {
                 [].to_vec(),              // refund_periods: Vec<MilliSeconds>,
                 [].to_vec(),              // refund_shares: Vec<Percentage>,
                 accounts.bob,             // refund_address: AccountId,
+                10,
             )
         }
 
@@ -449,6 +454,7 @@ pub mod shiden34 {
                 [].to_vec(),              // refund_periods: Vec<MilliSeconds>,
                 [].to_vec(),              // refund_shares: Vec<Percentage>,
                 accounts.bob,             // refund_address: AccountId,
+                10,
             );
 
             // check case when last_token_id.add(mint_amount) if more than u64::MAX
@@ -486,6 +492,7 @@ pub mod shiden34 {
                 [].to_vec(),              // refund_periods: Vec<MilliSeconds>,
                 [].to_vec(),              // refund_shares: Vec<Percentage>,
                 accounts.bob,             // refund_address: AccountId,
+                10,
             );
             let transferred_value = u128::MAX;
             let mint_amount = u64::MAX;
