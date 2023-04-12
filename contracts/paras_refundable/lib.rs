@@ -2,7 +2,7 @@
 #![feature(min_specialization)]
 
 #[openbrush::contract]
-pub mod shiden34 {
+pub mod paras_refundable {
     use ink::codegen::{EmitEvent, Env};
     use openbrush::{
         contracts::{
@@ -30,7 +30,7 @@ pub mod shiden34 {
     // Shiden34Contract contract storage
     #[ink(storage)]
     #[derive(Default, Storage)]
-    pub struct Shiden34Contract {
+    pub struct ParasRefundableContract {
         #[storage_field]
         psp34: psp34::Data<enumerable::Balances>,
         #[storage_field]
@@ -41,10 +41,10 @@ pub mod shiden34 {
         launchpad: types::Data,
     }
 
-    impl PSP34 for Shiden34Contract {}
-    impl PSP34Enumerable for Shiden34Contract {}
-    impl PSP34Metadata for Shiden34Contract {}
-    impl Ownable for Shiden34Contract {}
+    impl PSP34 for ParasRefundableContract {}
+    impl PSP34Enumerable for ParasRefundableContract {}
+    impl PSP34Metadata for ParasRefundableContract {}
+    impl Ownable for ParasRefundableContract {}
 
     /// Event emitted when a token transfer occurs.
     #[ink(event)]
@@ -82,7 +82,7 @@ pub mod shiden34 {
         refunded: Balance,
     }
 
-    impl Shiden34Contract {
+    impl ParasRefundableContract {
         #[ink(constructor)]
         pub fn new(
             name: String,
@@ -147,7 +147,7 @@ pub mod shiden34 {
     }
 
     // Override event emission methods
-    impl psp34::Internal for Shiden34Contract {
+    impl psp34::Internal for ParasRefundableContract {
         fn _emit_transfer_event(&self, from: Option<AccountId>, to: Option<AccountId>, id: Id) {
             self.env().emit_event(Transfer { from, to, id });
         }
@@ -168,7 +168,7 @@ pub mod shiden34 {
         }
     }
 
-    impl Launchpad for Shiden34Contract {
+    impl Launchpad for ParasRefundableContract {
         fn _emit_refund_event(
             &self,
             from: AccountId,
@@ -186,13 +186,13 @@ pub mod shiden34 {
             })
         }
     }
-    impl Psp34Traits for Shiden34Contract {}
+    impl Psp34Traits for ParasRefundableContract {}
 
     // ------------------- T E S T -----------------------------------------------------
     #[cfg(test)]
     mod tests {
         use super::*;
-        use crate::shiden34::PSP34Error::*;
+        use crate::paras_refundable::PSP34Error::*;
         use ink::env::{pay_with_call, test};
         use ink::prelude::string::String as PreludeString;
         use psp34_extension_pkg::impls::launchpad::{
@@ -223,9 +223,9 @@ pub mod shiden34 {
             assert_eq!(sh34.price(), PRICE);
         }
 
-        fn init() -> Shiden34Contract {
+        fn init() -> ParasRefundableContract {
             let accounts = default_accounts();
-            Shiden34Contract::new(
+            ParasRefundableContract::new(
                 String::from("Shiden34"), // name: String,
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
@@ -370,7 +370,7 @@ pub mod shiden34 {
 
         #[ink::test]
         fn token_uri_works() {
-            use crate::shiden34::Id::U64;
+            use crate::paras_refundable::Id::U64;
 
             let mut sh34 = init();
             let accounts = default_accounts();
@@ -440,7 +440,7 @@ pub mod shiden34 {
         fn check_supply_overflow_ok() {
             let max_supply = u64::MAX - 1;
             let accounts = default_accounts();
-            let mut sh34 = Shiden34Contract::new(
+            let mut sh34 = ParasRefundableContract::new(
                 String::from("Shiden34"), // name: String,
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
@@ -478,7 +478,7 @@ pub mod shiden34 {
             let max_supply = u64::MAX;
             let price = u128::MAX as u128;
             let accounts = default_accounts();
-            let sh34 = Shiden34Contract::new(
+            let sh34 = ParasRefundableContract::new(
                 String::from("Shiden34"), // name: String,
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,

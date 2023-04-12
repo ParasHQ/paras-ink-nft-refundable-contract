@@ -1,7 +1,7 @@
 [package]
-name = "shiden34"
-version = "0.2.0"
-authors = ["Stake Technologies <devops@stake.co.jp>"]
+name = "paras_refundable"
+version = "0.3.0"
+authors = ["Paras <dev@paras.id>"]
 edition = "2021"
 
 [dependencies]
@@ -15,7 +15,7 @@ psp34_extension_pkg = { path = "../../logics", default-features = false }
 
 
 [lib]
-name = "shiden34"
+name = "paras_refundable"
 path = "lib.rs"
 crate-type = [
 	# Used for normal contract Wasm blobs.

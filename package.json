@@ -1,6 +1,6 @@
 {
-  "name": "shiden34",
-  "version": "0.2.0",
+  "name": "paras_refundable",
+  "version": "0.3.0",
   "private": true,
   "dependencies": {
     "@727-ventures/typechain-compiler": "0.5.13",

@@ -2,13 +2,13 @@ import { expect, use } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { encodeAddress } from "@polkadot/keyring";
 import BN from "bn.js";
-import Shiden34_factory from "../types/constructors/shiden34";
-import Shiden34 from "../types/contracts/shiden34";
+import ParasRefundable_factory from "../types/constructors/paras_refundable";
+import ParasRefundable from "../types/contracts/paras_refundable";
 
 import { ApiPromise, WsProvider, Keyring } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { ReturnNumber } from "@727-ventures/typechain-types";
-import { Id, IdBuilder } from "../types/types-arguments/shiden34";
+import { Id, IdBuilder } from "../types/types-arguments/paras_refundable";
 
 use(chaiAsPromised);
 
@@ -26,12 +26,12 @@ const wsProvider = new WsProvider("ws://127.0.0.1:9944");
 const keyring = new Keyring({ type: "sr25519" });
 
 describe("Minting psp34 tokens", () => {
-  let shiden34Factory: Shiden34_factory;
+  let shiden34Factory: ParasRefundable_factory;
   let api: ApiPromise;
   let deployer: KeyringPair;
   let bob: KeyringPair;
   let projectAccount: KeyringPair;
-  let contract: Shiden34;
+  let contract: ParasRefundable;
 
   const gasLimit = 18750000000;
   const ZERO_ADDRESS = encodeAddress(
@@ -44,8 +44,8 @@ describe("Minting psp34 tokens", () => {
     deployer = keyring.addFromUri("//Alice");
     bob = keyring.addFromUri("//Bob");
     projectAccount = keyring.addFromUri("//Charlie");
-    shiden34Factory = new Shiden34_factory(api, deployer);
-    contract = new Shiden34(
+    shiden34Factory = new ParasRefundable_factory(api, deployer);
+    contract = new ParasRefundable(
       (
         await shiden34Factory.new(
           ["Shiden34"],
