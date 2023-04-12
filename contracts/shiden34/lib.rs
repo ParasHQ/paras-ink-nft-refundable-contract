@@ -161,7 +161,10 @@ pub mod shiden34 {
         use crate::shiden34::PSP34Error::*;
         use ink::env::{pay_with_call, test};
         use ink::prelude::string::String as PreludeString;
-        use psp34_extension_pkg::impls::launchpad::{launchpad::Internal, types::Shiden34Error};
+        use psp34_extension_pkg::impls::launchpad::{
+            launchpad::Internal,
+            types::{MintingStatus, Shiden34Error},
+        };
         const PRICE: Balance = 100_000_000_000_000_000;
         const BASE_URI: &str = "ipfs://myIpfsUri/";
         const MAX_SUPPLY: u64 = 10;
@@ -281,6 +284,9 @@ pub mod shiden34 {
         fn mint_low_value_fails() {
             let mut sh34 = init();
             let accounts = default_accounts();
+            set_sender(accounts.alice);
+            sh34.set_minting_status(Some(3));
+
             set_sender(accounts.bob);
             let num_of_mints = 1;
 
@@ -454,7 +460,7 @@ pub mod shiden34 {
             let transferred_value = u128::MAX;
             let mint_amount = u64::MAX;
             assert_eq!(
-                sh34.check_value(transferred_value, mint_amount),
+                sh34.check_value(transferred_value, mint_amount, &MintingStatus::Public),
                 Err(PSP34Error::Custom(Shiden34Error::BadMintValue.as_str()))
             );
         }
