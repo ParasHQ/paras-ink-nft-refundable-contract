@@ -55,7 +55,6 @@ pub struct Data {
     pub max_amount: u64,
     pub token_set: Vec<u64>,
     pub pseudo_random_salt: u64,
-    pub project_account_id: Option<AccountId>,
     pub forced_minting_status: Option<u8>,
     pub public_sale_start_at: u64,
     pub public_sale_end_at: u64,
@@ -70,9 +69,12 @@ pub struct Data {
     pub refund_address: Option<AccountId>,
     pub minting_type_for_token: Mapping<TokenId, MintingStatusIndex>,
     pub total_sales: Balance,
+    pub total_refund: Balance,
     pub withdrawn_sales_project: Balance,
     pub withdrawn_sales_launchpad: Balance,
     pub launchpad_fee: Percentage,
+    pub project_treasury: Option<AccountId>,
+    pub launchpad_treasury: Option<AccountId>,
 }
 
 #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]

@@ -17,7 +17,7 @@ pub trait Launchpad {
     fn mint_next(&mut self) -> Result<(), PSP34Error>;
 
     #[ink(message)]
-    fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error>;
+    fn refund(&mut self, token_id: u64) -> Result<u128, PSP34Error>;
 
     // Get refund amount for given token_id
     #[ink(message)]

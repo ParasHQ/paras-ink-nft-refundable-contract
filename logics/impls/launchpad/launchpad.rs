@@ -124,9 +124,14 @@ where
     }
 
     /// Withdraws funds to contract owner
-    #[modifiers(only_owner)]
     default fn withdraw_launchpad(&mut self) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
+
+        if caller_id != self.data::<Data>().launchpad_treasury.unwrap() {
+            return Err(PSP34Error::Custom(String::from(
+                Shiden34Error::Unauthorized.as_str(),
+            )));
+        }
 
         let available_to_withdraw = self.get_available_to_withdraw_launchpad_internal();
 
@@ -143,7 +148,7 @@ where
     default fn withdraw_project(&mut self) -> Result<(), PSP34Error> {
         let caller_id = Self::env().caller();
 
-        if caller_id != self.data::<Data>().project_account_id.unwrap() {
+        if caller_id != self.data::<Data>().project_treasury.unwrap() {
             return Err(PSP34Error::Custom(String::from(
                 Shiden34Error::Unauthorized.as_str(),
             )));
@@ -166,13 +171,17 @@ where
     }
 
     default fn get_available_to_withdraw_project(&self) -> Balance {
-        self.get_available_to_withdraw_launchpad_internal()
+        self.get_available_to_withdraw_project_internal()
     }
 
-    default fn refund(&mut self, token_id: u64) -> Result<(), PSP34Error> {
+    default fn refund(&mut self, token_id: u64) -> Result<u128, PSP34Error> {
         let caller_id = Self::env().caller();
 
-        assert_eq!(caller_id, self._owner_of(&Id::U64(token_id)).unwrap()); // To Do : check if assert works
+        if caller_id != self._owner_of(&Id::U64(token_id)).unwrap() {
+            return Err(PSP34Error::Custom(String::from(
+                Shiden34Error::Unauthorized.as_str(),
+            )));
+        }
 
         let (refund_amount, price) = self.get_refund_amount_and_price_internal(token_id);
 
@@ -201,10 +210,11 @@ where
                         price,
                         refund_amount,
                     );
+                    self.data::<Data>().total_refund += refund_amount;
                 }
                 _ => (),
             };
-            return Ok(());
+            return Ok(refund_amount);
         }
     }
 
@@ -437,6 +447,11 @@ where
     }
 
     default fn get_refund_amount_and_price_internal(&self, token_id: u64) -> (Balance, Balance) {
+        let minting_status = self.get_current_minting_status();
+        if minting_status != MintingStatus::End {
+            return (0, 0);
+        }
+
         let minting_type_index = self.data::<Data>().minting_type_for_token.get(token_id);
         if minting_type_index.is_none() {
             return (0, 0);
@@ -497,23 +512,32 @@ where
 
         let current_timestamp = Self::env().block_timestamp();
 
-        let total_withdraw_share: u128 = {
+        let mut total_withdraw_share: u128 = 0;
+
+        if current_timestamp
+            > (self.data::<Data>().public_sale_end_at
+                + self.data::<Data>().refund_periods.last().unwrap())
+        {
+            total_withdraw_share =
+                self.data::<Data>().total_sales - self.data::<Data>().total_refund;
+        } else {
             for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
                 if current_timestamp < (self.data::<Data>().public_sale_end_at + refund_period) {
                     let non_refundable_percentage: Balance =
                         100 - *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
 
-                    return (non_refundable_percentage * self.data::<Data>().total_sales)
+                    total_withdraw_share = (non_refundable_percentage
+                        * self.data::<Data>().total_sales)
                         .saturating_div(100);
+                    break;
                 }
             }
-            0
-        };
+        }
 
         let launchpad_share =
             (total_withdraw_share * self.data::<Data>().launchpad_fee).saturating_div(100);
 
-        self.data::<Data>().withdrawn_sales_launchpad - launchpad_share
+        launchpad_share - self.data::<Data>().withdrawn_sales_launchpad
     }
 
     fn get_available_to_withdraw_project_internal(&self) -> Balance {
@@ -524,22 +548,30 @@ where
 
         let current_timestamp = Self::env().block_timestamp();
 
-        let total_withdraw_share: u128 = {
+        let mut total_withdraw_share: u128 = 0;
+        if current_timestamp
+            > (self.data::<Data>().public_sale_end_at
+                + self.data::<Data>().refund_periods.last().unwrap())
+        {
+            total_withdraw_share =
+                self.data::<Data>().total_sales - self.data::<Data>().total_refund;
+        } else {
             for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
                 if current_timestamp < (self.data::<Data>().public_sale_end_at + refund_period) {
                     let non_refundable_percentage: Balance =
                         100 - *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
 
-                    return (non_refundable_percentage * self.data::<Data>().total_sales)
+                    total_withdraw_share = (non_refundable_percentage
+                        * self.data::<Data>().total_sales)
                         .saturating_div(100);
+                    break;
                 }
             }
-            0
-        };
+        }
 
         let project_share =
             (total_withdraw_share * (100 - self.data::<Data>().launchpad_fee)).saturating_div(100);
 
-        self.data::<Data>().withdrawn_sales_project - project_share
+        project_share - self.data::<Data>().withdrawn_sales_project
     }
 }

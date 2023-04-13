@@ -89,7 +89,6 @@ pub mod paras_refundable {
             symbol: String,
             base_uri: String,
             max_supply: u64,
-            project_account_id: AccountId,
             prepresale_price_per_mint: Balance,
             presale_price_per_mint: Balance,
             price_per_mint: Balance,
@@ -101,6 +100,8 @@ pub mod paras_refundable {
             refund_shares: Vec<Percentage>,
             refund_address: AccountId,
             launchpad_fee: Percentage,
+            project_treasury: AccountId,
+            launchpad_treasury: AccountId,
         ) -> Self {
             let mut instance = Self::default();
 
@@ -117,7 +118,7 @@ pub mod paras_refundable {
             instance.launchpad.max_amount = 10;
             instance.launchpad.token_set = (1..max_supply + 1).map(u64::from).collect::<Vec<u64>>();
             instance.launchpad.pseudo_random_salt = 0;
-            instance.launchpad.project_account_id = Some(project_account_id);
+            instance.launchpad.project_treasury = Some(project_treasury);
             instance.launchpad.prepresale_start_at = prepresale_start_at;
             instance.launchpad.presale_start_at = presale_start_at;
             instance.launchpad.public_sale_start_at = public_sale_start_at;
@@ -132,6 +133,7 @@ pub mod paras_refundable {
             instance.launchpad.withdrawn_sales_launchpad = 0;
             instance.launchpad.withdrawn_sales_project = 0;
             instance.launchpad.launchpad_fee = launchpad_fee;
+            instance.launchpad.launchpad_treasury = Some(launchpad_treasury);
 
             instance
         }
@@ -210,6 +212,9 @@ pub mod paras_refundable {
         const BASE_URI: &str = "ipfs://myIpfsUri/";
         const MAX_SUPPLY: u64 = 10;
 
+        const PUBLIC_SALE_END_AT: u64 = 1682899200000;
+        const ONE_MONTH_IN_MILLIS: u64 = 2592000000;
+
         #[ink::test]
         fn init_works() {
             let sh34 = init();
@@ -237,18 +242,24 @@ pub mod paras_refundable {
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
                 MAX_SUPPLY,               // max_supply: u64,
-                accounts.bob,             // project_account_id: AccountId,
                 PREPRESALE_PRICE,         // prepresale_price_per_mint: Balance,
                 PRESALE_PRICE,            // presale_price_per_mint: Balance
                 PRICE,                    // price_per_mint: Balance,
                 0,                        // prepresale_start_at: u64,
                 0,                        // presale_start_at: u64,
                 0,                        // public_sale_start_at: u64,
-                0,                        // public_sale_end_at: u64,
-                [].to_vec(),              // refund_periods: Vec<MilliSeconds>,
-                [].to_vec(),              // refund_shares: Vec<Percentage>,
-                accounts.bob,             // refund_address: AccountId,
+                PUBLIC_SALE_END_AT,       // public_sale_end_at: u64,
+                [
+                    ONE_MONTH_IN_MILLIS,
+                    ONE_MONTH_IN_MILLIS * 2,
+                    ONE_MONTH_IN_MILLIS * 3,
+                ]
+                .to_vec(), // refund_periods: Vec<MilliSeconds>,
+                [95, 85, 70].to_vec(),    // refund_shares: Vec<Percentage>,
+                accounts.charlie,         // refund_address: AccountId,
                 10,
+                accounts.charlie, // project_treasury: AccountId,
+                accounts.django,
             )
         }
 
@@ -350,7 +361,7 @@ pub mod paras_refundable {
             assert_eq!(sh34.owner(), accounts.alice);
 
             set_sender(accounts.alice);
-            assert!(sh34.set_minting_status(Some(2)).is_ok()); // prepresale
+            assert!(sh34.set_minting_status(Some(2)).is_ok()); // preesale
             assert!(sh34.add_account_to_presale(accounts.bob, 1).is_ok());
 
             set_sender(accounts.bob);
@@ -367,6 +378,215 @@ pub mod paras_refundable {
                 Some(accounts.bob)
             );
             assert_eq!(sh34.balance_of(accounts.bob), 1);
+
+            assert_eq!(1, ink::env::test::recorded_events().count());
+        }
+
+        #[ink::test]
+        fn refund_presale_works() {
+            use crate::paras_refundable::Id::U64;
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            assert_eq!(sh34.owner(), accounts.alice);
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(2)).is_ok()); // presale
+            assert!(sh34.add_account_to_presale(accounts.bob, 1).is_ok());
+
+            set_sender(accounts.bob);
+
+            test::set_account_balance::<ink::env::DefaultEnvironment>(accounts.bob, PRESALE_PRICE);
+
+            assert!(pay_with_call!(sh34.mint_next(), PRESALE_PRICE).is_ok());
+
+            let bob_token_id: u64 = match sh34.owners_token_by_index(accounts.bob, 0).ok().unwrap()
+            {
+                U64(value) => value,
+                _ => 0,
+            };
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(4)).is_ok());
+
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(PUBLIC_SALE_END_AT + 1);
+            set_sender(accounts.bob);
+            assert!(sh34.refund(bob_token_id).is_ok());
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.bob)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 95) / 100
+            );
+
+            assert_eq!(sh34.balance_of(accounts.bob), 0);
+            assert_eq!(sh34.balance_of(accounts.charlie), 1);
+
+            assert_eq!(3, ink::env::test::recorded_events().count());
+        }
+
+        #[ink::test]
+        fn withdraw_launchpad_works() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            assert_eq!(sh34.owner(), accounts.alice);
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(2)).is_ok()); // presale
+            assert!(sh34.add_account_to_presale(accounts.bob, 1).is_ok());
+
+            set_sender(accounts.bob);
+
+            test::set_account_balance::<ink::env::DefaultEnvironment>(accounts.bob, PRESALE_PRICE);
+            assert!(pay_with_call!(sh34.mint_next(), PRESALE_PRICE).is_ok());
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(4)).is_ok());
+
+            test::set_account_balance::<ink::env::DefaultEnvironment>(accounts.django, 0);
+
+            // first month withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(PUBLIC_SALE_END_AT + 1);
+
+            set_sender(accounts.django);
+            assert_eq!(
+                sh34.get_available_to_withdraw_launchpad(),
+                (PRESALE_PRICE * 5 * 10) / (100 * 100)
+            );
+            assert!(sh34.withdraw_launchpad().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.django)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 5 * 10) / (100 * 100)
+            );
+
+            // second month withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(
+                PUBLIC_SALE_END_AT + ONE_MONTH_IN_MILLIS + 1,
+            );
+
+            set_sender(accounts.django);
+            assert!(sh34.withdraw_launchpad().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.django)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 15 * 10) / (100 * 100)
+            );
+
+            // third month withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(
+                PUBLIC_SALE_END_AT + ONE_MONTH_IN_MILLIS * 2 + 1,
+            );
+
+            set_sender(accounts.django);
+            assert!(sh34.withdraw_launchpad().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.django)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 30 * 10) / (100 * 100)
+            );
+
+            // after 3 months withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(
+                PUBLIC_SALE_END_AT + ONE_MONTH_IN_MILLIS * 3 + 1,
+            );
+
+            set_sender(accounts.django);
+            assert!(sh34.withdraw_launchpad().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.django)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 10) / 100
+            );
+
+            assert_eq!(1, ink::env::test::recorded_events().count());
+        }
+
+        #[ink::test]
+        fn withdraw_project_works() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            assert_eq!(sh34.owner(), accounts.alice);
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(2)).is_ok()); // presale
+            assert!(sh34.add_account_to_presale(accounts.bob, 1).is_ok());
+
+            set_sender(accounts.bob);
+
+            test::set_account_balance::<ink::env::DefaultEnvironment>(accounts.bob, PRESALE_PRICE);
+            assert!(pay_with_call!(sh34.mint_next(), PRESALE_PRICE).is_ok());
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(4)).is_ok());
+
+            test::set_account_balance::<ink::env::DefaultEnvironment>(accounts.charlie, 0);
+
+            // first month withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(PUBLIC_SALE_END_AT + 1);
+
+            set_sender(accounts.charlie);
+            assert_eq!(
+                sh34.get_available_to_withdraw_project(),
+                (PRESALE_PRICE * 5) / (100) - (PRESALE_PRICE * 5 * 10) / (100 * 100)
+            );
+            assert!(sh34.withdraw_project().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.charlie)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 5) / (100) - (PRESALE_PRICE * 5 * 10) / (100 * 100)
+            );
+
+            // second month withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(
+                PUBLIC_SALE_END_AT + ONE_MONTH_IN_MILLIS + 1,
+            );
+
+            assert!(sh34.withdraw_project().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.charlie)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 15) / (100) - (PRESALE_PRICE * 15 * 10) / (100 * 100)
+            );
+
+            // third month withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(
+                PUBLIC_SALE_END_AT + ONE_MONTH_IN_MILLIS * 2 + 1,
+            );
+
+            assert!(sh34.withdraw_project().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.charlie)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 30) / (100) - (PRESALE_PRICE * 30 * 10) / (100 * 100)
+            );
+
+            // after 3 months withdraw
+            test::set_block_timestamp::<ink::env::DefaultEnvironment>(
+                PUBLIC_SALE_END_AT + ONE_MONTH_IN_MILLIS * 3 + 1,
+            );
+
+            assert!(sh34.withdraw_project().is_ok());
+
+            assert_eq!(
+                test::get_account_balance::<ink::env::DefaultEnvironment>(accounts.charlie)
+                    .ok()
+                    .unwrap(),
+                (PRESALE_PRICE * 90) / 100
+            );
 
             assert_eq!(1, ink::env::test::recorded_events().count());
         }
@@ -465,8 +685,8 @@ pub mod paras_refundable {
             assert!(sh34.withdraw_launchpad().is_err());
             assert_eq!(sh34.env().balance(), expected_contract_balance);
 
-            // Alice (contract owner) withdraws. Existential minimum is still set
-            set_sender(accounts.alice);
+            // Django (launchpad treasrury) withdraws. Existential minimum is still set
+            set_sender(accounts.django);
             assert!(sh34.withdraw_launchpad().is_ok());
         }
 
@@ -547,18 +767,19 @@ pub mod paras_refundable {
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
                 max_supply,               // max_supply: u64
-                accounts.bob,             // project_account_id: AccountId,
                 PREPRESALE_PRICE,
                 PRESALE_PRICE,
-                PRICE,        // price_per_mint: Balance,
-                0,            // prepresale_start_at: u64,
-                0,            // presale_start_at: u64,
-                0,            // public_sale_start_at: u64,
-                0,            // public_sale_end_at: u64,
-                [].to_vec(),  // refund_periods: Vec<MilliSeconds>,
-                [].to_vec(),  // refund_shares: Vec<Percentage>,
-                accounts.bob, // refund_address: AccountId,
+                PRICE,            // price_per_mint: Balance,
+                0,                // prepresale_start_at: u64,
+                0,                // presale_start_at: u64,
+                0,                // public_sale_start_at: u64,
+                0,                // public_sale_end_at: u64,
+                [].to_vec(),      // refund_periods: Vec<MilliSeconds>,
+                [].to_vec(),      // refund_shares: Vec<Percentage>,
+                accounts.charlie, // refund_address: AccountId,
                 10,
+                accounts.charlie, // project_treasury: AccountId,
+                accounts.django,  // launchpad_treasury: AccountId,
             );
 
             // check case when last_token_id.add(mint_amount) if more than u64::MAX
@@ -587,18 +808,19 @@ pub mod paras_refundable {
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
                 max_supply,               // max_supply: u64,
-                accounts.bob,             // project_account_id: AccountId,
                 PREPRESALE_PRICE,
                 PRESALE_PRICE,
-                price,           // price_per_mint: Balance,
-                0,               // prepresale_start_at: u64,
-                0,               // presale_start_at: u64,
-                0,               // public_sale_start_at: u64,
-                100000000000000, // public_sale_end_at: u64,
-                [].to_vec(),     // refund_periods: Vec<MilliSeconds>,
-                [].to_vec(),     // refund_shares: Vec<Percentage>,
-                accounts.bob,    // refund_address: AccountId,
+                price,            // price_per_mint: Balance,
+                0,                // prepresale_start_at: u64,
+                0,                // presale_start_at: u64,
+                0,                // public_sale_start_at: u64,
+                100000000000000,  // public_sale_end_at: u64,
+                [].to_vec(),      // refund_periods: Vec<MilliSeconds>,
+                [].to_vec(),      // refund_shares: Vec<Percentage>,
+                accounts.charlie, // refund_address: AccountId,
                 10,
+                accounts.charlie, // project_treasury: AccountId,
+                accounts.django,
             );
             let transferred_value = u128::MAX;
             let mint_amount = u64::MAX;
