@@ -56,7 +56,7 @@ pub trait Internal {
 
     fn get_available_to_withdraw_project_internal(&self) -> Balance;
 
-    fn check_allowed_to_mint(
+    fn check_and_update_allowed_to_mint(
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
@@ -83,7 +83,7 @@ where
 
         self.check_amount(mint_amount)?;
         self.check_value(transferred_value, mint_amount, &minting_status)?;
-        self.check_allowed_to_mint(caller_id, mint_amount, &minting_status)?;
+        self.check_and_update_allowed_to_mint(caller_id, mint_amount, &minting_status)?;
 
         for _ in 0..mint_amount {
             let mint_id = self.get_mint_id();
@@ -107,7 +107,7 @@ where
 
         self.check_amount(1)?;
         self.check_value(transferred_value, 1, &minting_status)?;
-        self.check_allowed_to_mint(caller_id, 1, &minting_status)?;
+        self.check_and_update_allowed_to_mint(caller_id, 1, &minting_status)?;
 
         let mint_id = self.get_mint_id();
         self.data::<psp34::Data<enumerable::Balances>>()
@@ -379,7 +379,7 @@ where
             .swap_remove(token_set_idx as usize)
     }
 
-    default fn check_allowed_to_mint(
+    default fn check_and_update_allowed_to_mint(
         &mut self,
         account_id: AccountId,
         mint_amount: u64,
