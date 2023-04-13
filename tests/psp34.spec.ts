@@ -26,7 +26,7 @@ const wsProvider = new WsProvider("ws://127.0.0.1:9944");
 const keyring = new Keyring({ type: "sr25519" });
 
 describe("Minting psp34 tokens", () => {
-  let shiden34Factory: ParasRefundable_factory;
+  let parasRefundableFactory: ParasRefundable_factory;
   let api: ApiPromise;
   let deployer: KeyringPair;
   let bob: KeyringPair;
@@ -44,24 +44,27 @@ describe("Minting psp34 tokens", () => {
     deployer = keyring.addFromUri("//Alice");
     bob = keyring.addFromUri("//Bob");
     projectAccount = keyring.addFromUri("//Charlie");
-    shiden34Factory = new ParasRefundable_factory(api, deployer);
+    parasRefundableFactory = new ParasRefundable_factory(api, deployer);
     contract = new ParasRefundable(
       (
-        await shiden34Factory.new(
-          ["Shiden34"],
-          ["SH34"],
-          [BASE_URI],
-          MAX_SUPPLY,
-          PRICE_PER_MINT,
-          projectAccount.address,
-          0,
-          0,
-          0,
-          1711626898000,
-          [],
-          [],
-          projectAccount.address,
-          10
+        await parasRefundableFactory.new(
+          ["ParasRefundable"], // name: String,
+          ["PR"], // symbol: String,
+          [BASE_URI], // base_uri: String,
+          MAX_SUPPLY, // max_supply: u64,
+          PRICE_PER_MINT, // prepresale_price_per_mint: Balance,
+          PRICE_PER_MINT, // presale_price_per_mint: Balance,
+          PRICE_PER_MINT, // price_per_mint: Balance,
+          0, // prepresale_start_at: u64,
+          0, // presale_start_at: u64,
+          0, // public_sale_start_at: u64,
+          1711626898000, // public_sale_end_at: u64,
+          [], // refund_periods: Vec<MilliSeconds>,
+          [], // refund_shares: Vec<Percentage>,
+          projectAccount.address, // refund_address: AccountId,
+          10, // launchpad_fee: Percentage,
+          projectAccount.address, // project_treasury: AccountId,
+          deployer.address // launchpad_treasury: AccountId,
         )
       ).address,
       deployer,
@@ -98,7 +101,7 @@ describe("Minting psp34 tokens", () => {
     const { gasRequired } = await contract.withSigner(bob).query.mintNext();
     let mintResult = await contract
       .withSigner(bob)
-      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired });
+      .tx.mintNext({ value: PRICE_PER_MINT });
 
     // verify minting results. The totalSupply value is BN
     expect(
@@ -134,9 +137,7 @@ describe("Minting psp34 tokens", () => {
     const gasRequiredMaxAmount = (
       await contract.withSigner(bob).query.setMaxMintAmount(5)
     ).gasRequired;
-    await contract
-      .withSigner(deployer)
-      .tx.setMaxMintAmount(5, { gasLimit: gasRequiredMaxAmount });
+    await contract.withSigner(deployer).tx.setMaxMintAmount(5);
 
     await contract.withSigner(bob).tx.mint(bob.address, 5, {
       value: PRICE_PER_MINT.muln(5),
@@ -162,7 +163,7 @@ describe("Minting psp34 tokens", () => {
     let { gasRequired } = await contract.withSigner(bob).query.mintNext();
     let mintResult = await contract
       .withSigner(bob)
-      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired });
+      .tx.mintNext({ value: PRICE_PER_MINT });
 
     const firstTokenId = IdBuilder.U64(
       (await contract.query.tokenByIndex(0)).value.unwrap().ok.u64
@@ -182,9 +183,7 @@ describe("Minting psp34 tokens", () => {
     ).gasRequired;
     let transferResult = await contract
       .withSigner(bob)
-      .tx.transfer(deployer.address, firstTokenId, [], {
-        gasLimit: transferGas,
-      });
+      .tx.transfer(deployer.address, firstTokenId, [], {});
 
     // Verify transfer
     expect((await contract.query.ownerOf(firstTokenId)).value.ok).to.equal(
@@ -203,9 +202,7 @@ describe("Minting psp34 tokens", () => {
 
     // Bob mints
     let { gasRequired } = await contract.withSigner(bob).query.mintNext();
-    await contract
-      .withSigner(bob)
-      .tx.mintNext({ value: PRICE_PER_MINT, gasLimit: gasRequired });
+    await contract.withSigner(bob).tx.mintNext({ value: PRICE_PER_MINT });
 
     const firstTokenId = IdBuilder.U64(
       (await contract.query.tokenByIndex(0)).value.unwrap().ok.u64
@@ -219,9 +216,7 @@ describe("Minting psp34 tokens", () => {
     ).gasRequired;
     let approveResult = await contract
       .withSigner(bob)
-      .tx.approve(deployer.address, firstTokenId, true, {
-        gasLimit: approveGas,
-      });
+      .tx.approve(deployer.address, firstTokenId, true, {});
 
     // Verify that Bob is still the owner and allowance is set
     expect((await contract.query.ownerOf(firstTokenId)).value.ok).to.equal(
