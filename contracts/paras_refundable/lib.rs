@@ -89,8 +89,10 @@ pub mod paras_refundable {
             symbol: String,
             base_uri: String,
             max_supply: u64,
-            price_per_mint: Balance,
             project_account_id: AccountId,
+            prepresale_price_per_mint: Balance,
+            presale_price_per_mint: Balance,
+            price_per_mint: Balance,
             prepresale_start_at: u64,
             presale_start_at: u64,
             public_sale_start_at: u64,
@@ -109,6 +111,9 @@ pub mod paras_refundable {
             instance._set_attribute(collection_id, String::from("baseUri"), base_uri);
             instance.launchpad.max_supply = max_supply;
             instance.launchpad.price_per_mint = price_per_mint;
+            instance.launchpad.prepresale_price_per_mint = prepresale_price_per_mint;
+            instance.launchpad.presale_price_per_mint = presale_price_per_mint;
+
             instance.launchpad.max_amount = 10;
             instance.launchpad.token_set = (1..max_supply + 1).map(u64::from).collect::<Vec<u64>>();
             instance.launchpad.pseudo_random_salt = 0;
@@ -200,6 +205,8 @@ pub mod paras_refundable {
             types::{MintingStatus, Shiden34Error},
         };
         const PRICE: Balance = 100_000_000_000_000_000;
+        const PREPRESALE_PRICE: Balance = 10_000_000_000_000_000;
+        const PRESALE_PRICE: Balance = 20_000_000_000_000_000;
         const BASE_URI: &str = "ipfs://myIpfsUri/";
         const MAX_SUPPLY: u64 = 10;
 
@@ -230,8 +237,10 @@ pub mod paras_refundable {
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
                 MAX_SUPPLY,               // max_supply: u64,
-                PRICE,                    // price_per_mint: Balance,
                 accounts.bob,             // project_account_id: AccountId,
+                PREPRESALE_PRICE,         // prepresale_price_per_mint: Balance,
+                PRESALE_PRICE,            // presale_price_per_mint: Balance
+                PRICE,                    // price_per_mint: Balance,
                 0,                        // prepresale_start_at: u64,
                 0,                        // presale_start_at: u64,
                 0,                        // public_sale_start_at: u64,
@@ -258,6 +267,99 @@ pub mod paras_refundable {
             test::set_value_transferred::<ink::env::DefaultEnvironment>(PRICE);
             assert!(sh34.mint_next().is_ok());
             assert_eq!(sh34.total_supply(), 1);
+
+            let bob_token_id = sh34.owners_token_by_index(accounts.bob, 0);
+            assert_eq!(
+                sh34.owner_of(bob_token_id.ok().unwrap()),
+                Some(accounts.bob)
+            );
+            assert_eq!(sh34.balance_of(accounts.bob), 1);
+
+            assert_eq!(1, ink::env::test::recorded_events().count());
+        }
+
+        #[ink::test]
+        fn set_minting_status_works() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(1)).is_ok()); // prepresale
+        }
+
+        #[ink::test]
+        fn set_minting_status_auth_error() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            set_sender(accounts.bob);
+            assert!(sh34.set_minting_status(Some(1)).is_err()); // prepresale
+        }
+
+        #[ink::test]
+        fn add_to_presale_and_prepresale_works() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            set_sender(accounts.alice);
+            assert!(sh34.add_account_to_prepresale(accounts.bob, 1).is_ok());
+            assert_eq!(sh34.get_account_prepresale_minting_amount(accounts.bob), 1);
+
+            assert!(sh34.add_account_to_presale(accounts.bob, 1).is_ok());
+            assert_eq!(sh34.get_account_presale_minting_amount(accounts.bob), 1);
+        }
+
+        #[ink::test]
+        fn add_to_presale_and_prepresale_auth_error() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            set_sender(accounts.bob);
+            assert!(sh34.add_account_to_prepresale(accounts.bob, 1).is_err());
+            assert!(sh34.add_account_to_presale(accounts.bob, 1).is_err());
+        }
+
+        #[ink::test]
+        fn mint_prepresale_works() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            assert_eq!(sh34.owner(), accounts.alice);
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(1)).is_ok()); // prepresale
+            assert!(sh34.add_account_to_prepresale(accounts.bob, 1).is_ok());
+
+            set_sender(accounts.bob);
+
+            assert_eq!(sh34.total_supply(), 0);
+            test::set_value_transferred::<ink::env::DefaultEnvironment>(PREPRESALE_PRICE);
+            assert!(sh34.mint_next().is_ok());
+            assert_eq!(sh34.total_supply(), 1);
+            assert_eq!(sh34.get_account_prepresale_minting_amount(accounts.bob), 0);
+
+            let bob_token_id = sh34.owners_token_by_index(accounts.bob, 0);
+            assert_eq!(
+                sh34.owner_of(bob_token_id.ok().unwrap()),
+                Some(accounts.bob)
+            );
+            assert_eq!(sh34.balance_of(accounts.bob), 1);
+
+            assert_eq!(1, ink::env::test::recorded_events().count());
+        }
+
+        #[ink::test]
+        fn mint_presale_works() {
+            let mut sh34 = init();
+            let accounts = default_accounts();
+            assert_eq!(sh34.owner(), accounts.alice);
+
+            set_sender(accounts.alice);
+            assert!(sh34.set_minting_status(Some(2)).is_ok()); // prepresale
+            assert!(sh34.add_account_to_presale(accounts.bob, 1).is_ok());
+
+            set_sender(accounts.bob);
+
+            assert_eq!(sh34.total_supply(), 0);
+            test::set_value_transferred::<ink::env::DefaultEnvironment>(PRESALE_PRICE);
+            assert!(sh34.mint_next().is_ok());
+            assert_eq!(sh34.total_supply(), 1);
+            assert_eq!(sh34.get_account_presale_minting_amount(accounts.bob), 0);
 
             let bob_token_id = sh34.owners_token_by_index(accounts.bob, 0);
             assert_eq!(
@@ -320,7 +422,7 @@ pub mod paras_refundable {
             let mut sh34 = init();
             let accounts = default_accounts();
             set_sender(accounts.alice);
-            sh34.set_minting_status(Some(3));
+            assert!(sh34.set_minting_status(Some(3)).is_ok());
 
             set_sender(accounts.bob);
             let num_of_mints = 1;
@@ -445,15 +547,17 @@ pub mod paras_refundable {
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
                 max_supply,               // max_supply: u64
-                PRICE,                    // price_per_mint: Balance,
                 accounts.bob,             // project_account_id: AccountId,
-                0,                        // prepresale_start_at: u64,
-                0,                        // presale_start_at: u64,
-                0,                        // public_sale_start_at: u64,
-                0,                        // public_sale_end_at: u64,
-                [].to_vec(),              // refund_periods: Vec<MilliSeconds>,
-                [].to_vec(),              // refund_shares: Vec<Percentage>,
-                accounts.bob,             // refund_address: AccountId,
+                PREPRESALE_PRICE,
+                PRESALE_PRICE,
+                PRICE,        // price_per_mint: Balance,
+                0,            // prepresale_start_at: u64,
+                0,            // presale_start_at: u64,
+                0,            // public_sale_start_at: u64,
+                0,            // public_sale_end_at: u64,
+                [].to_vec(),  // refund_periods: Vec<MilliSeconds>,
+                [].to_vec(),  // refund_shares: Vec<Percentage>,
+                accounts.bob, // refund_address: AccountId,
                 10,
             );
 
@@ -483,15 +587,17 @@ pub mod paras_refundable {
                 String::from("SH34"),     // symbol: String,
                 String::from(BASE_URI),   // base_uri: String,
                 max_supply,               // max_supply: u64,
-                price,                    // price_per_mint: Balance,
                 accounts.bob,             // project_account_id: AccountId,
-                0,                        // prepresale_start_at: u64,
-                0,                        // presale_start_at: u64,
-                0,                        // public_sale_start_at: u64,
-                100000000000000,          // public_sale_end_at: u64,
-                [].to_vec(),              // refund_periods: Vec<MilliSeconds>,
-                [].to_vec(),              // refund_shares: Vec<Percentage>,
-                accounts.bob,             // refund_address: AccountId,
+                PREPRESALE_PRICE,
+                PRESALE_PRICE,
+                price,           // price_per_mint: Balance,
+                0,               // prepresale_start_at: u64,
+                0,               // presale_start_at: u64,
+                0,               // public_sale_start_at: u64,
+                100000000000000, // public_sale_end_at: u64,
+                [].to_vec(),     // refund_periods: Vec<MilliSeconds>,
+                [].to_vec(),     // refund_shares: Vec<Percentage>,
+                accounts.bob,    // refund_address: AccountId,
                 10,
             );
             let transferred_value = u128::MAX;
