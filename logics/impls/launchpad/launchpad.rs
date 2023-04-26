@@ -19,7 +19,9 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use crate::impls::launchpad::types::{Data, MintingStatus, Shiden34Error};
+use crate::impls::launchpad::types::{
+    Data, MilliSeconds, MintingStatus, Percentage, Shiden34Error,
+};
 pub use crate::traits::launchpad::Launchpad;
 
 use ink::prelude::vec::Vec;
@@ -290,11 +292,11 @@ where
 
     default fn _emit_refund_event(
         &self,
-        from: AccountId,
-        to: AccountId,
-        id: Option<Id>,
-        price: Balance,
-        refunded: Balance,
+        _from: AccountId,
+        _to: AccountId,
+        _id: Option<Id>,
+        _price: Balance,
+        _refunded: Balance,
     ) {
     }
 
@@ -310,6 +312,54 @@ where
             .presale_whitelisted
             .get(account_id)
             .unwrap_or(0)
+    }
+
+    default fn get_prepresale_start_at(&self) -> u64 {
+        self.data::<Data>().prepresale_start_at
+    }
+
+    default fn get_presale_start_at(&self) -> u64 {
+        self.data::<Data>().presale_start_at
+    }
+
+    default fn get_public_sale_start_at(&self) -> u64 {
+        self.data::<Data>().public_sale_start_at
+    }
+
+    default fn get_public_sale_end_at(&self) -> u64 {
+        self.data::<Data>().public_sale_end_at
+    }
+
+    default fn prepresale_price(&self) -> Balance {
+        self.data::<Data>().prepresale_price_per_mint
+    }
+
+    default fn presale_price(&self) -> Balance {
+        self.data::<Data>().presale_price_per_mint
+    }
+
+    default fn get_refund_periods(&self) -> Vec<MilliSeconds> {
+        self.data::<Data>().refund_periods.to_vec()
+    }
+
+    default fn get_refund_shares(&self) -> Vec<Percentage> {
+        self.data::<Data>().refund_shares.to_vec()
+    }
+
+    default fn get_refund_address(&self) -> AccountId {
+        self.data::<Data>().refund_address.unwrap()
+    }
+
+    default fn get_launchpad_fee(&self) -> Percentage {
+        self.data::<Data>().launchpad_fee
+    }
+
+    default fn get_project_treasury_address(&self) -> AccountId {
+        self.data::<Data>().project_treasury.unwrap()
+    }
+
+    default fn get_launchpad_treasury_address(&self) -> AccountId {
+        self.data::<Data>().launchpad_treasury.unwrap()
     }
 }
 

@@ -1,7 +1,10 @@
+use ink::prelude::vec::Vec;
 use openbrush::{
     contracts::psp34::{Id, PSP34Error},
     traits::{AccountId, Balance, String},
 };
+
+use crate::impls::launchpad::types::{MilliSeconds, Percentage};
 
 #[openbrush::wrapper]
 pub type LaunchpadRef = dyn Launchpad;
@@ -48,6 +51,44 @@ pub trait Launchpad {
     /// Get token price
     #[ink(message)]
     fn price(&self) -> Balance;
+
+    /// Get token price presale
+    #[ink(message)]
+    fn prepresale_price(&self) -> Balance;
+
+    /// Get token price presale
+    #[ink(message)]
+    fn presale_price(&self) -> Balance;
+
+    #[ink(message)]
+    fn get_prepresale_start_at(&self) -> u64;
+
+    #[ink(message)]
+    fn get_presale_start_at(&self) -> u64;
+
+    #[ink(message)]
+    fn get_public_sale_start_at(&self) -> u64;
+
+    #[ink(message)]
+    fn get_public_sale_end_at(&self) -> u64;
+
+    #[ink(message)]
+    fn get_refund_periods(&self) -> Vec<MilliSeconds>;
+
+    #[ink(message)]
+    fn get_refund_shares(&self) -> Vec<Percentage>;
+
+    #[ink(message)]
+    fn get_refund_address(&self) -> AccountId;
+
+    #[ink(message)]
+    fn get_launchpad_fee(&self) -> Percentage;
+
+    #[ink(message)]
+    fn get_project_treasury_address(&self) -> AccountId;
+
+    #[ink(message)]
+    fn get_launchpad_treasury_address(&self) -> AccountId;
 
     /// Get max number of tokens which could be minted per call
     #[ink(message)]
