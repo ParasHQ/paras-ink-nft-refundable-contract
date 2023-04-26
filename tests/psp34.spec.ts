@@ -122,6 +122,25 @@ describe("Minting psp34 tokens", () => {
     });
   });
 
+  it("Use tokenUri works", async () => {
+    await setup();
+    const tokenId: Id = IdBuilder.U64(1);
+
+    expect(
+      (await contract.query.totalSupply()).value.unwrap().toNumber()
+    ).to.equal(0);
+
+    // mint
+    const { gasRequired } = await contract.withSigner(bob).query.mintNext();
+    let mintResult = await contract
+      .withSigner(bob)
+      .tx.mintNext({ value: PRICE_PER_MINT });
+
+    const firstTokenId = (await contract.query.tokenByIndex(0)).value.unwrap()
+      .ok.u64;
+    console.log((await contract.query.tokenUri(firstTokenId)).value.ok.ok);
+  });
+
   it("Mint 5 tokens works", async () => {
     await setup();
 
