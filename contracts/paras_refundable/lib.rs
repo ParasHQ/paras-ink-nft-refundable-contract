@@ -199,7 +199,6 @@ pub mod paras_refundable {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use crate::paras_refundable::PSP34Error::*;
         use ink::env::{pay_with_call, test};
         use ink::prelude::string::String as PreludeString;
         use psp34_extension_pkg::impls::launchpad::{
@@ -703,7 +702,6 @@ pub mod paras_refundable {
             let mint_result = sh34.mint_next();
             assert!(mint_result.is_ok());
             // return error if request is for not yet minted token
-            assert_eq!(sh34.token_uri(42), Err(TokenNotExists));
 
             let alice_token_id: u64 =
                 match sh34.owners_token_by_index(accounts.alice, 0).ok().unwrap() {
@@ -712,22 +710,17 @@ pub mod paras_refundable {
                 };
             assert_eq!(
                 sh34.token_uri(alice_token_id),
-                Ok(PreludeString::from(
+                PreludeString::from(
                     BASE_URI.to_owned() + format!("{}.json", alice_token_id).as_str()
-                ))
+                )
             );
-
-            // return error if request is for not yet minted token
-            assert_eq!(sh34.token_uri(42), Err(TokenNotExists));
 
             // verify token_uri when baseUri is empty
             set_sender(accounts.alice);
             assert!(sh34.set_base_uri(PreludeString::from("")).is_ok());
             assert_eq!(
                 sh34.token_uri(alice_token_id),
-                Ok(PreludeString::from(
-                    "".to_owned() + format!("{}.json", alice_token_id).as_str()
-                ))
+                PreludeString::from("".to_owned() + format!("{}.json", alice_token_id).as_str())
             );
         }
 

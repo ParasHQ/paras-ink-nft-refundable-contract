@@ -13,5 +13,9 @@ pub trait Psp34Traits {
 
     /// Get URI from token ID
     #[ink(message)]
-    fn token_uri(&self, token_id: u64) -> Result<PreludeString, PSP34Error>;
+    fn token_uri(&self, token_id: u64) -> PreludeString;
+
+    /// https://github.com/Koniverse/SubWallet-Extension/blob/master/packages/extension-base/src/koni/api/nft/wasm_nft/index.ts#L88
+    #[ink(message)]
+    fn get_attribute_count(&self) -> u32;
 }

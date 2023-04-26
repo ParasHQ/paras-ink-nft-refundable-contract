@@ -138,7 +138,7 @@ describe("Minting psp34 tokens", () => {
 
     const firstTokenId = (await contract.query.tokenByIndex(0)).value.unwrap()
       .ok.u64;
-    console.log((await contract.query.tokenUri(firstTokenId)).value.ok.ok);
+    console.log((await contract.query.tokenUri(firstTokenId)).value.ok);
   });
 
   it("Mint 5 tokens works", async () => {

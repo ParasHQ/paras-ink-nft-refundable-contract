@@ -36,8 +36,7 @@ where
         + psp34::extensions::metadata::PSP34Metadata,
 {
     /// Get URI from token ID
-    default fn token_uri(&self, token_id: u64) -> Result<PreludeString, PSP34Error> {
-        self.token_exists(Id::U64(token_id))?;
+    default fn token_uri(&self, token_id: u64) -> PreludeString {
         let value = self.get_attribute(
             self.data::<psp34::Data<enumerable::Balances>>()
                 .collection_id(),
@@ -45,7 +44,7 @@ where
         );
         let mut token_uri = PreludeString::from_utf8(value.unwrap()).unwrap();
         token_uri = token_uri + &token_id.to_string() + &PreludeString::from(".json");
-        Ok(token_uri)
+        token_uri
     }
 
     /// Set new value for the baseUri
@@ -57,5 +56,10 @@ where
         self.data::<metadata::Data>()
             ._set_attribute(id, String::from("baseUri"), uri.into_bytes());
         Ok(())
+    }
+
+    /// Get Attribute Count
+    default fn get_attribute_count(&self) -> u32 {
+        0
     }
 }
