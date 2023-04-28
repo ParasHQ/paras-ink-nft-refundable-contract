@@ -75,6 +75,8 @@ pub struct Data {
     pub launchpad_fee: Percentage,
     pub project_treasury: Option<AccountId>,
     pub launchpad_treasury: Option<AccountId>,
+    pub attribute_count: u32,
+    pub attribute_names: Mapping<u32, Vec<u8>>,
 }
 
 #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
