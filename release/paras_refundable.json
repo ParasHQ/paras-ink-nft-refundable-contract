@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x77bbe386de6d335b65775c88f64633bd95f932a5599eae0a29b9d7281d35cdf1",
+    "hash": "0xcb6fc02cfe0cb906982661e974a3b479aef5aeca6b9c67b59696b5cc0098142a",
     "language": "ink! 4.1.0",
     "compiler": "rustc 1.69.0-nightly",
     "build_info": {
@@ -203,7 +203,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 21
+              "type": 20
             }
           },
           {
@@ -214,7 +214,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 21
+              "type": 20
             }
           },
           {
@@ -266,7 +266,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 17
+              "type": 22
             }
           },
           {
@@ -277,7 +277,7 @@
               "displayName": [
                 "bool"
               ],
-              "type": 19
+              "type": 23
             }
           }
         ],
@@ -318,7 +318,7 @@
               "displayName": [
                 "Option"
               ],
-              "type": 17
+              "type": 22
             }
           },
           {
@@ -397,6 +397,83 @@
         "selector": "0x628413fe"
       },
       {
+        "args": [],
+        "docs": [
+          " Returns the collection `Id` of the NFT token.",
+          "",
+          " This can represents the relationship between tokens/contracts/pallets."
+        ],
+        "label": "PSP34::collection_id",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 17
+        },
+        "selector": "0xffa27a5f"
+      },
+      {
+        "args": [
+          {
+            "label": "id",
+            "type": {
+              "displayName": [
+                "psp34_external",
+                "OwnerOfInput1"
+              ],
+              "type": 18
+            }
+          }
+        ],
+        "docs": [
+          " Returns the owner of the token if any."
+        ],
+        "label": "PSP34::owner_of",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 19
+        },
+        "selector": "0x1168624d"
+      },
+      {
+        "args": [
+          {
+            "label": "owner",
+            "type": {
+              "displayName": [
+                "psp34_external",
+                "BalanceOfInput1"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [
+          " Returns the balance of the owner.",
+          "",
+          " This represents the amount of unique tokens the owner has."
+        ],
+        "label": "PSP34::balance_of",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 21
+        },
+        "selector": "0xcde7e55f"
+      },
+      {
         "args": [
           {
             "label": "operator",
@@ -415,7 +492,7 @@
                 "psp34_external",
                 "ApproveInput2"
               ],
-              "type": 17
+              "type": 22
             }
           },
           {
@@ -425,7 +502,7 @@
                 "psp34_external",
                 "ApproveInput3"
               ],
-              "type": 19
+              "type": 23
             }
           }
         ],
@@ -456,53 +533,6 @@
       {
         "args": [
           {
-            "label": "id",
-            "type": {
-              "displayName": [
-                "psp34_external",
-                "OwnerOfInput1"
-              ],
-              "type": 18
-            }
-          }
-        ],
-        "docs": [
-          " Returns the owner of the token if any."
-        ],
-        "label": "PSP34::owner_of",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 20
-        },
-        "selector": "0x1168624d"
-      },
-      {
-        "args": [],
-        "docs": [
-          " Returns the collection `Id` of the NFT token.",
-          "",
-          " This can represents the relationship between tokens/contracts/pallets."
-        ],
-        "label": "PSP34::collection_id",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 22
-        },
-        "selector": "0xffa27a5f"
-      },
-      {
-        "args": [
-          {
             "label": "owner",
             "type": {
               "displayName": [
@@ -529,7 +559,7 @@
                 "psp34_external",
                 "AllowanceInput3"
               ],
-              "type": 17
+              "type": 22
             }
           }
         ],
@@ -545,39 +575,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 23
-        },
-        "selector": "0x4790f55a"
-      },
-      {
-        "args": [
-          {
-            "label": "owner",
-            "type": {
-              "displayName": [
-                "psp34_external",
-                "BalanceOfInput1"
-              ],
-              "type": 0
-            }
-          }
-        ],
-        "docs": [
-          " Returns the balance of the owner.",
-          "",
-          " This represents the amount of unique tokens the owner has."
-        ],
-        "label": "PSP34::balance_of",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
           "type": 24
         },
-        "selector": "0xcde7e55f"
+        "selector": "0x4790f55a"
       },
       {
         "args": [
@@ -789,23 +789,6 @@
       {
         "args": [],
         "docs": [
-          " Returns the address of the current owner."
-        ],
-        "label": "Ownable::owner",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 32
-        },
-        "selector": "0x4fa43c8c"
-      },
-      {
-        "args": [],
-        "docs": [
           " Leaves the contract without owner. It will not be possible to call",
           " owner's functions anymore. Can only be called by the current owner.",
           "",
@@ -831,114 +814,11 @@
         "selector": "0x5e228753"
       },
       {
-        "args": [
-          {
-            "label": "account_id",
-            "type": {
-              "displayName": [
-                "launchpad_external",
-                "AddAccountToPrepresaleInput1"
-              ],
-              "type": 0
-            }
-          },
-          {
-            "label": "mint_amount",
-            "type": {
-              "displayName": [
-                "launchpad_external",
-                "AddAccountToPrepresaleInput2"
-              ],
-              "type": 6
-            }
-          }
-        ],
-        "docs": [],
-        "label": "Launchpad::add_account_to_prepresale",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 13
-        },
-        "selector": "0x7253a5b3"
-      },
-      {
-        "args": [
-          {
-            "label": "minting_status_index",
-            "type": {
-              "displayName": [
-                "launchpad_external",
-                "SetMintingStatusInput1"
-              ],
-              "type": 33
-            }
-          }
-        ],
-        "docs": [],
-        "label": "Launchpad::set_minting_status",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 13
-        },
-        "selector": "0x7599a8f7"
-      },
-      {
-        "args": [
-          {
-            "label": "token_id",
-            "type": {
-              "displayName": [
-                "launchpad_external",
-                "RefundInput1"
-              ],
-              "type": 6
-            }
-          }
-        ],
-        "docs": [],
-        "label": "Launchpad::refund",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 34
-        },
-        "selector": "0x91ce70d0"
-      },
-      {
         "args": [],
         "docs": [
-          " Withdraw funds to launchpad project"
+          " Returns the address of the current owner."
         ],
-        "label": "Launchpad::withdraw_project",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 13
-        },
-        "selector": "0x8d797984"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_available_to_withdraw_project",
+        "label": "Ownable::owner",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -946,56 +826,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 16
+          "type": 32
         },
-        "selector": "0x6eb500e3"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_available_to_withdraw_launchpad",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 16
-        },
-        "selector": "0x404d2f60"
-      },
-      {
-        "args": [],
-        "docs": [
-          " Get token price presale"
-        ],
-        "label": "Launchpad::prepresale_price",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 16
-        },
-        "selector": "0x22195d3a"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_public_sale_start_at",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 36
-        },
-        "selector": "0x9785e5ad"
+        "selector": "0x4fa43c8c"
       },
       {
         "args": [],
@@ -1011,6 +844,124 @@
           "type": 32
         },
         "selector": "0xc1d0c169"
+      },
+      {
+        "args": [
+          {
+            "label": "account_id",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "GetAccountPrepresaleMintingAmountInput1"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::get_account_prepresale_minting_amount",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0x9f1bfa9b"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Get token price"
+        ],
+        "label": "Launchpad::price",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 16
+        },
+        "selector": "0xbfb4e0e0"
+      },
+      {
+        "args": [
+          {
+            "label": "max_amount",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "SetMaxMintAmountInput1"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [
+          " Set max number of tokens which could be minted per call"
+        ],
+        "label": "Launchpad::set_max_mint_amount",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0x7bcbcd9b"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_refund_periods",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 34
+        },
+        "selector": "0x232757e6"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Withdraw funds to contract owner"
+        ],
+        "label": "Launchpad::withdraw_launchpad",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0xce9a9645"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_project_treasury_address",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 32
+        },
+        "selector": "0x445e071f"
       },
       {
         "args": [
@@ -1051,7 +1002,7 @@
       {
         "args": [],
         "docs": [],
-        "label": "Launchpad::get_public_sale_end_at",
+        "label": "Launchpad::get_minting_status",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -1059,42 +1010,89 @@
             "ink",
             "MessageResult"
           ],
-          "type": 36
+          "type": 35
         },
-        "selector": "0xf551d63f"
-      },
-      {
-        "args": [
-          {
-            "label": "account_id",
-            "type": {
-              "displayName": [
-                "launchpad_external",
-                "GetAccountPresaleMintingAmountInput1"
-              ],
-              "type": 0
-            }
-          }
-        ],
-        "docs": [],
-        "label": "Launchpad::get_account_presale_minting_amount",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 36
-        },
-        "selector": "0x2d1251f8"
+        "selector": "0x68375362"
       },
       {
         "args": [],
         "docs": [
-          " Get token price presale"
+          " Get max supply of tokens"
         ],
-        "label": "Launchpad::presale_price",
+        "label": "Launchpad::max_supply",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0xcfff8196"
+      },
+      {
+        "args": [
+          {
+            "label": "token_id",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "RefundInput1"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::refund",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 36
+        },
+        "selector": "0x91ce70d0"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_prepresale_start_at",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0xdebdc3ea"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Get max number of tokens which could be minted per call"
+        ],
+        "label": "Launchpad::get_max_mint_amount",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0xf6196c55"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_launchpad_fee",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -1104,29 +1102,12 @@
           ],
           "type": 16
         },
-        "selector": "0x24399466"
-      },
-      {
-        "args": [],
-        "docs": [
-          " Mint next available token for the caller"
-        ],
-        "label": "Launchpad::mint_next",
-        "mutates": true,
-        "payable": true,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 13
-        },
-        "selector": "0xf02a61f2"
+        "selector": "0x20363824"
       },
       {
         "args": [],
         "docs": [],
-        "label": "Launchpad::get_refund_periods",
+        "label": "Launchpad::get_available_to_withdraw_launchpad",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -1134,9 +1115,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 37
+          "type": 16
         },
-        "selector": "0x232757e6"
+        "selector": "0x404d2f60"
       },
       {
         "args": [
@@ -1165,6 +1146,298 @@
         "selector": "0x2fc61cfa"
       },
       {
+        "args": [
+          {
+            "label": "account_id",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "GetAccountPresaleMintingAmountInput1"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::get_account_presale_minting_amount",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0x2d1251f8"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Mint next available token for the caller"
+        ],
+        "label": "Launchpad::mint_next",
+        "mutates": true,
+        "payable": true,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0xf02a61f2"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_available_to_withdraw_project",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 16
+        },
+        "selector": "0x6eb500e3"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_refund_shares",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 38
+        },
+        "selector": "0xe605cdf8"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_public_sale_start_at",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0x9785e5ad"
+      },
+      {
+        "args": [
+          {
+            "label": "account_id_mint_amounts",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "AddAccountToPrepresaleBatchInput1"
+              ],
+              "type": 39
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::add_account_to_prepresale_batch",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0x86e0adc1"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Withdraw funds to launchpad project"
+        ],
+        "label": "Launchpad::withdraw_project",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0x8d797984"
+      },
+      {
+        "args": [
+          {
+            "label": "account_id",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "AddAccountToPrepresaleInput1"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "mint_amount",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "AddAccountToPrepresaleInput2"
+              ],
+              "type": 6
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::add_account_to_prepresale",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0x7253a5b3"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_presale_start_at",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0x573d72cf"
+      },
+      {
+        "args": [
+          {
+            "label": "refund_periods",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "SetRefundPeriodsInput1"
+              ],
+              "type": 9
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::set_refund_periods",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0xe3b959ae"
+      },
+      {
+        "args": [
+          {
+            "label": "minting_status_index",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "SetMintingStatusInput1"
+              ],
+              "type": 41
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::set_minting_status",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0x7599a8f7"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "Launchpad::get_public_sale_end_at",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0xf551d63f"
+      },
+      {
+        "args": [
+          {
+            "label": "account_id_mint_amounts",
+            "type": {
+              "displayName": [
+                "launchpad_external",
+                "AddAccountToPresaleBatchInput1"
+              ],
+              "type": 39
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Launchpad::add_account_to_presale_batch",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0x9a9565fb"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Get token price presale"
+        ],
+        "label": "Launchpad::presale_price",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 16
+        },
+        "selector": "0x24399466"
+      },
+      {
         "args": [],
         "docs": [],
         "label": "Launchpad::get_launchpad_treasury_address",
@@ -1178,55 +1451,6 @@
           "type": 32
         },
         "selector": "0x9c1fefc1"
-      },
-      {
-        "args": [],
-        "docs": [
-          " Get max supply of tokens"
-        ],
-        "label": "Launchpad::max_supply",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 36
-        },
-        "selector": "0xcfff8196"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_prepresale_start_at",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 36
-        },
-        "selector": "0xdebdc3ea"
-      },
-      {
-        "args": [],
-        "docs": [
-          " Withdraw funds to contract owner"
-        ],
-        "label": "Launchpad::withdraw_launchpad",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 13
-        },
-        "selector": "0xce9a9645"
       },
       {
         "args": [
@@ -1268,8 +1492,10 @@
       },
       {
         "args": [],
-        "docs": [],
-        "label": "Launchpad::get_launchpad_fee",
+        "docs": [
+          " Get token price presale"
+        ],
+        "label": "Launchpad::prepresale_price",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -1279,51 +1505,33 @@
           ],
           "type": 16
         },
-        "selector": "0x20363824"
+        "selector": "0x22195d3a"
       },
       {
         "args": [
           {
-            "label": "account_id",
+            "label": "token_id",
             "type": {
               "displayName": [
-                "launchpad_external",
-                "GetAccountPrepresaleMintingAmountInput1"
+                "psp34traits_external",
+                "SetMultipleAttributesInput1"
               ],
-              "type": 0
+              "type": 18
+            }
+          },
+          {
+            "label": "metadata",
+            "type": {
+              "displayName": [
+                "psp34traits_external",
+                "SetMultipleAttributesInput2"
+              ],
+              "type": 42
             }
           }
         ],
         "docs": [],
-        "label": "Launchpad::get_account_prepresale_minting_amount",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 36
-        },
-        "selector": "0x9f1bfa9b"
-      },
-      {
-        "args": [
-          {
-            "label": "max_amount",
-            "type": {
-              "displayName": [
-                "launchpad_external",
-                "SetMaxMintAmountInput1"
-              ],
-              "type": 6
-            }
-          }
-        ],
-        "docs": [
-          " Set max number of tokens which could be minted per call"
-        ],
-        "label": "Launchpad::set_max_mint_amount",
+        "label": "Psp34Traits::set_multiple_attributes",
         "mutates": true,
         "payable": false,
         "returnType": {
@@ -1333,74 +1541,14 @@
           ],
           "type": 13
         },
-        "selector": "0x7bcbcd9b"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_presale_start_at",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 36
-        },
-        "selector": "0x573d72cf"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_project_treasury_address",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 32
-        },
-        "selector": "0x445e071f"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_refund_shares",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 38
-        },
-        "selector": "0xe605cdf8"
+        "selector": "0x5bf8416b"
       },
       {
         "args": [],
         "docs": [
-          " Get max number of tokens which could be minted per call"
+          " This function return how many unique attributes in the contract"
         ],
-        "label": "Launchpad::get_max_mint_amount",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 36
-        },
-        "selector": "0xf6196c55"
-      },
-      {
-        "args": [],
-        "docs": [],
-        "label": "Launchpad::get_minting_status",
+        "label": "Psp34Traits::get_attribute_count",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -1408,26 +1556,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 39
+          "type": 21
         },
-        "selector": "0x68375362"
-      },
-      {
-        "args": [],
-        "docs": [
-          " Get token price"
-        ],
-        "label": "Launchpad::price",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 16
-        },
-        "selector": "0xbfb4e0e0"
+        "selector": "0x61c50d69"
       },
       {
         "args": [
@@ -1438,7 +1569,7 @@
                 "psp34traits_external",
                 "SetBaseUriInput1"
               ],
-              "type": 40
+              "type": 44
             }
           }
         ],
@@ -1458,11 +1589,22 @@
         "selector": "0x4de6850b"
       },
       {
-        "args": [],
-        "docs": [
-          " https://github.com/Koniverse/SubWallet-Extension/blob/master/packages/extension-base/src/koni/api/nft/wasm_nft/index.ts#L88"
+        "args": [
+          {
+            "label": "index",
+            "type": {
+              "displayName": [
+                "psp34traits_external",
+                "GetAttributeNameInput1"
+              ],
+              "type": 5
+            }
+          }
         ],
-        "label": "Psp34Traits::get_attribute_count",
+        "docs": [
+          " This function return the attribute name using attribute index. Beacause attributes of an NFT can be set to anything by Contract Owner, AztZero uses this function to get all attributes of an NFT"
+        ],
+        "label": "Psp34Traits::get_attribute_name",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -1470,9 +1612,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 24
+          "type": 45
         },
-        "selector": "0x61c50d69"
+        "selector": "0xfcfe34de"
       },
       {
         "args": [
@@ -1498,9 +1640,47 @@
             "ink",
             "MessageResult"
           ],
-          "type": 41
+          "type": 45
         },
         "selector": "0x249dfd4f"
+      },
+      {
+        "args": [
+          {
+            "label": "token_id",
+            "type": {
+              "displayName": [
+                "psp34traits_external",
+                "GetAttributesInput1"
+              ],
+              "type": 18
+            }
+          },
+          {
+            "label": "attributes",
+            "type": {
+              "displayName": [
+                "psp34traits_external",
+                "GetAttributesInput2"
+              ],
+              "type": 46
+            }
+          }
+        ],
+        "docs": [
+          " This function returns all available attributes of each NFT"
+        ],
+        "label": "Psp34Traits::get_attributes",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 47
+        },
+        "selector": "0x18209102"
       }
     ]
   },
@@ -2148,6 +2328,29 @@
                         }
                       },
                       "name": "launchpad_treasury"
+                    },
+                    {
+                      "layout": {
+                        "leaf": {
+                          "key": "0x00000000",
+                          "ty": 5
+                        }
+                      },
+                      "name": "attribute_count"
+                    },
+                    {
+                      "layout": {
+                        "root": {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x8bf87035",
+                              "ty": 8
+                            }
+                          },
+                          "root_key": "0x8bf87035"
+                        }
+                      },
+                      "name": "attribute_names"
                     }
                   ],
                   "name": "Data"
@@ -2520,17 +2723,22 @@
           "variant": {
             "variants": [
               {
-                "index": 0,
-                "name": "None"
-              },
-              {
                 "fields": [
                   {
                     "type": 18
                   }
                 ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 12
+                  }
+                ],
                 "index": 1,
-                "name": "Some"
+                "name": "Err"
               }
             ]
           }
@@ -2539,10 +2747,14 @@
           {
             "name": "T",
             "type": 18
+          },
+          {
+            "name": "E",
+            "type": 12
           }
         ],
         "path": [
-          "Option"
+          "Result"
         ]
       }
     },
@@ -2627,20 +2839,12 @@
       "id": 19,
       "type": {
         "def": {
-          "primitive": "bool"
-        }
-      }
-    },
-    {
-      "id": 20,
-      "type": {
-        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 21
+                    "type": 20
                   }
                 ],
                 "index": 0,
@@ -2661,7 +2865,7 @@
         "params": [
           {
             "name": "T",
-            "type": 21
+            "type": 20
           },
           {
             "name": "E",
@@ -2674,7 +2878,7 @@
       }
     },
     {
-      "id": 21,
+      "id": 20,
       "type": {
         "def": {
           "variant": {
@@ -2707,91 +2911,7 @@
       }
     },
     {
-      "id": 22,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 18
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 12
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 18
-          },
-          {
-            "name": "E",
-            "type": 12
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 23,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 19
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 12
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 19
-          },
-          {
-            "name": "E",
-            "type": 12
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 24,
+      "id": 21,
       "type": {
         "def": {
           "variant": {
@@ -2821,6 +2941,89 @@
           {
             "name": "T",
             "type": 5
+          },
+          {
+            "name": "E",
+            "type": 12
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 18
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 18
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 23,
+      "type": {
+        "def": {
+          "primitive": "bool"
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 23
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 12
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 23
           },
           {
             "name": "E",
@@ -3150,123 +3353,6 @@
           "variant": {
             "variants": [
               {
-                "index": 0,
-                "name": "None"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 2
-                  }
-                ],
-                "index": 1,
-                "name": "Some"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 2
-          }
-        ],
-        "path": [
-          "Option"
-        ]
-      }
-    },
-    {
-      "id": 34,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 35
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 12
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 35
-          },
-          {
-            "name": "E",
-            "type": 12
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 35,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 7
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 15
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 7
-          },
-          {
-            "name": "E",
-            "type": 15
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 36,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
                 "fields": [
                   {
                     "type": 6
@@ -3303,7 +3389,7 @@
       }
     },
     {
-      "id": 37,
+      "id": 34,
       "type": {
         "def": {
           "variant": {
@@ -3337,6 +3423,132 @@
           {
             "name": "E",
             "type": 12
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 35,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 12
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 8
+          },
+          {
+            "name": "E",
+            "type": 12
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 36,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 37
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 12
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 37
+          },
+          {
+            "name": "E",
+            "type": 12
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 37,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 7
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 7
+          },
+          {
+            "name": "E",
+            "type": 15
           }
         ],
         "path": [
@@ -3390,12 +3602,95 @@
       "id": 39,
       "type": {
         "def": {
+          "sequence": {
+            "type": 40
+          }
+        }
+      }
+    },
+    {
+      "id": 40,
+      "type": {
+        "def": {
+          "tuple": [
+            0,
+            6
+          ]
+        }
+      }
+    },
+    {
+      "id": 41,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 2
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 2
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 42,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 43
+          }
+        }
+      }
+    },
+    {
+      "id": 43,
+      "type": {
+        "def": {
+          "tuple": [
+            44,
+            44
+          ]
+        }
+      }
+    },
+    {
+      "id": 44,
+      "type": {
+        "def": {
+          "primitive": "str"
+        }
+      }
+    },
+    {
+      "id": 45,
+      "type": {
+        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 8
+                    "type": 44
                   }
                 ],
                 "index": 0,
@@ -3416,7 +3711,7 @@
         "params": [
           {
             "name": "T",
-            "type": 8
+            "type": 44
           },
           {
             "name": "E",
@@ -3429,15 +3724,17 @@
       }
     },
     {
-      "id": 40,
+      "id": 46,
       "type": {
         "def": {
-          "primitive": "str"
+          "sequence": {
+            "type": 44
+          }
         }
       }
     },
     {
-      "id": 41,
+      "id": 47,
       "type": {
         "def": {
           "variant": {
@@ -3445,7 +3742,7 @@
               {
                 "fields": [
                   {
-                    "type": 40
+                    "type": 46
                   }
                 ],
                 "index": 0,
@@ -3466,7 +3763,7 @@
         "params": [
           {
             "name": "T",
-            "type": 40
+            "type": 46
           },
           {
             "name": "E",
