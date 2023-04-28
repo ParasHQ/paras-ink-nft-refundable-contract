@@ -305,6 +305,19 @@ where
         return Ok(());
     }
 
+    #[modifiers(only_owner)]
+    default fn set_refund_periods(
+        &mut self,
+        refund_periods: Vec<MilliSeconds>,
+    ) -> Result<(), PSP34Error> {
+        if self.data::<Data>().refund_periods.len() != refund_periods.len() {
+            return Err(PSP34Error::Custom(String::from("InvalidInput")));
+        }
+
+        self.data::<Data>().refund_periods = refund_periods;
+        Ok(())
+    }
+
     default fn get_minting_status(&self) -> String {
         let minting_status = self.get_current_minting_status();
         match minting_status {

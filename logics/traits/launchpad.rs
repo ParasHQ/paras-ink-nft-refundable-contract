@@ -90,6 +90,9 @@ pub trait Launchpad {
     #[ink(message)]
     fn get_launchpad_treasury_address(&self) -> AccountId;
 
+    #[ink(message)]
+    fn set_refund_periods(&mut self, refund_periods: Vec<MilliSeconds>) -> Result<(), PSP34Error>;
+
     /// Get max number of tokens which could be minted per call
     #[ink(message)]
     fn get_max_mint_amount(&mut self) -> u64;
