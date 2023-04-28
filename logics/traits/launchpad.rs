@@ -109,6 +109,18 @@ pub trait Launchpad {
     ) -> Result<(), PSP34Error>;
 
     #[ink(message)]
+    fn add_account_to_prepresale_batch(
+        &mut self,
+        account_id_mint_amounts: Vec<(AccountId, u64)>,
+    ) -> Result<(), PSP34Error>;
+
+    #[ink(message)]
+    fn add_account_to_presale_batch(
+        &mut self,
+        account_id_mint_amounts: Vec<(AccountId, u64)>,
+    ) -> Result<(), PSP34Error>;
+
+    #[ink(message)]
     fn get_account_prepresale_minting_amount(&self, account_id: AccountId) -> u64;
 
     #[ink(message)]

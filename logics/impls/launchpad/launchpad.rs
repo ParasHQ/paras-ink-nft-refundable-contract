@@ -259,6 +259,32 @@ where
     }
 
     #[modifiers(only_owner)]
+    fn add_account_to_prepresale_batch(
+        &mut self,
+        account_id_mint_amounts: Vec<(AccountId, u64)>,
+    ) -> Result<(), PSP34Error> {
+        for (account_id, mint_amount) in account_id_mint_amounts {
+            self.data::<Data>()
+                .prepresale_whitelisted
+                .insert(account_id, &mint_amount);
+        }
+        Ok(())
+    }
+
+    #[modifiers(only_owner)]
+    fn add_account_to_presale_batch(
+        &mut self,
+        account_id_mint_amounts: Vec<(AccountId, u64)>,
+    ) -> Result<(), PSP34Error> {
+        for (account_id, mint_amount) in account_id_mint_amounts {
+            self.data::<Data>()
+                .prepresale_whitelisted
+                .insert(account_id, &mint_amount);
+        }
+        Ok(())
+    }
+
+    #[modifiers(only_owner)]
     default fn add_account_to_presale(
         &mut self,
         account_id: AccountId,
