@@ -58,6 +58,8 @@ pub trait Internal {
 
     fn get_available_to_withdraw_project_internal(&self) -> Balance;
 
+    fn get_total_withdraw_share_internal(&self) -> u128;
+
     fn check_and_update_allowed_to_mint(
         &mut self,
         account_id: AccountId,
@@ -599,30 +601,7 @@ where
             return 0;
         }
 
-        let current_timestamp = Self::env().block_timestamp();
-
-        let mut total_withdraw_share: u128 = 0;
-
-        if current_timestamp
-            > (self.data::<Data>().public_sale_end_at
-                + self.data::<Data>().refund_periods.last().unwrap())
-        {
-            total_withdraw_share =
-                self.data::<Data>().total_sales - self.data::<Data>().total_refund;
-        } else {
-            for (i, refund_period) in self.data::<Data>().refund_periods.iter().enumerate() {
-                if current_timestamp < (self.data::<Data>().public_sale_end_at + refund_period) {
-                    let non_refundable_percentage: Balance =
-                        100 - *self.data::<Data>().refund_shares.get(i).unwrap_or(&100);
-
-                    total_withdraw_share = (non_refundable_percentage
-                        * self.data::<Data>().total_sales)
-                        .saturating_div(100);
-                    break;
-                }
-            }
-        }
-
+        let total_withdraw_share = self.get_total_withdraw_share_internal();
         let launchpad_share =
             (total_withdraw_share * self.data::<Data>().launchpad_fee).saturating_div(100);
 
@@ -635,9 +614,18 @@ where
             return 0;
         }
 
+        let total_withdraw_share = self.get_total_withdraw_share_internal();
+        let project_share =
+            (total_withdraw_share * (100 - self.data::<Data>().launchpad_fee)).saturating_div(100);
+
+        project_share - self.data::<Data>().withdrawn_sales_project
+    }
+
+    fn get_total_withdraw_share_internal(&self) -> u128 {
         let current_timestamp = Self::env().block_timestamp();
 
         let mut total_withdraw_share: u128 = 0;
+
         if current_timestamp
             > (self.data::<Data>().public_sale_end_at
                 + self.data::<Data>().refund_periods.last().unwrap())
@@ -657,10 +645,6 @@ where
                 }
             }
         }
-
-        let project_share =
-            (total_withdraw_share * (100 - self.data::<Data>().launchpad_fee)).saturating_div(100);
-
-        project_share - self.data::<Data>().withdrawn_sales_project
+        return total_withdraw_share;
     }
 }
