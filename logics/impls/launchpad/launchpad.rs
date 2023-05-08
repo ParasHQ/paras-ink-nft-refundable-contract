@@ -278,7 +278,7 @@ where
     ) -> Result<(), PSP34Error> {
         for (account_id, mint_amount) in account_id_mint_amounts {
             self.data::<Data>()
-                .prepresale_whitelisted
+                .presale_whitelisted
                 .insert(account_id, &mint_amount);
         }
         Ok(())
