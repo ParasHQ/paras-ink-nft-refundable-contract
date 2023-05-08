@@ -124,8 +124,14 @@ pub mod paras_refundable {
             instance.launchpad.public_sale_start_at = public_sale_start_at;
             instance.launchpad.public_sale_end_at = public_sale_end_at;
 
-            // dont use assert
+            // validation
             assert_eq!(refund_periods.len(), refund_shares.len());
+            for refund_share in &refund_shares {
+                assert!(refund_share < &100);
+            }
+            assert!(launchpad_fee < 100);
+
+
             instance.launchpad.refund_periods = refund_periods;
             instance.launchpad.refund_shares = refund_shares;
             instance.launchpad.refund_address = Some(refund_address);
